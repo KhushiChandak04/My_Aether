@@ -151,4 +151,44 @@ export class LiquidityOptimizer {
 
         return transactions;
     }
+
+    async addLiquidity(amount: string): Promise<Types.UserTransaction> {
+        const params: LiquidityParams = {
+            tokenA: 'APT',
+            tokenB: 'USDC',
+            amountA: BigInt(amount),
+            amountB: BigInt(amount) // For simplicity, using 1:1 ratio
+        };
+
+        try {
+            return await this.protocolManager.executeProtocolAction(
+                'pancake', // Default to PancakeSwap for now
+                ProtocolAction.ADD_LIQUIDITY,
+                params
+            );
+        } catch (error) {
+            console.error('Failed to add liquidity:', error);
+            throw error;
+        }
+    }
+
+    async removeLiquidity(amount: string): Promise<Types.UserTransaction> {
+        const params: LiquidityParams = {
+            tokenA: 'APT',
+            tokenB: 'USDC',
+            amountA: BigInt(amount),
+            amountB: BigInt(amount) // For simplicity, using 1:1 ratio
+        };
+
+        try {
+            return await this.protocolManager.executeProtocolAction(
+                'pancake', // Default to PancakeSwap for now
+                ProtocolAction.REMOVE_LIQUIDITY,
+                params
+            );
+        } catch (error) {
+            console.error('Failed to remove liquidity:', error);
+            throw error;
+        }
+    }
 }

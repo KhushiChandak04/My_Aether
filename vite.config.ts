@@ -4,7 +4,8 @@ import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  root: './src/web',
+  root: resolve(__dirname, 'src/web'),
+  publicDir: resolve(__dirname, 'src/web/public'),
   server: {
     port: 4000,
     proxy: {
@@ -16,12 +17,12 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: '../../dist/web',
+    outDir: resolve(__dirname, 'dist/web'),
     emptyOutDir: true,
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
+      '@': resolve(__dirname, 'src'),
     },
   },
 });
