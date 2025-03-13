@@ -22,11 +22,11 @@ import { Menu as MenuIcon } from '@mui/icons-material';
 import MarketUpdate from './components/MarketUpdate';
 import CryptoList from './components/CryptoList';
 import AutoTrading from './components/AutoTrading';
+import TransactionHistory from './components/TransactionHistory';
 import Products from './pages/Products';
 import Solutions from './pages/Solutions';
 import Community from './pages/Community';
 import Resources from './pages/Resources';
-import Pricing from './pages/Pricing';
 import WalletConnect from './components/WalletConnect';
 import { Web3Provider } from './providers/Web3Provider';
 
@@ -49,7 +49,6 @@ const navigationItems = [
     { path: '/solutions', label: 'Solutions' },
     { path: '/community', label: 'Community' },
     { path: '/resources', label: 'Resources' },
-    { path: '/pricing', label: 'Pricing' },
 ];
 
 const App: React.FC = () => {
@@ -147,13 +146,15 @@ const App: React.FC = () => {
                                         <Grid item xs={12}>
                                             <AutoTrading />
                                         </Grid>
+                                        <Grid item xs={12}>
+                                            <TransactionHistory />
+                                        </Grid>
                                     </Grid>
                                 } />
                                 <Route path="/products" element={<Products />} />
                                 <Route path="/solutions" element={<Solutions />} />
                                 <Route path="/community" element={<Community />} />
                                 <Route path="/resources" element={<Resources />} />
-                                <Route path="/pricing" element={<Pricing />} />
                             </Routes>
                         </Container>
                     </Box>
