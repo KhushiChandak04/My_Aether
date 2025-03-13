@@ -1,77 +1,84 @@
-import { ethers } from 'ethers';
-
 declare global {
-    interface Window {
-        ethereum?: any;
-    }
+  interface Window {
+    aptos?: any;
+  }
 }
 
 export interface WalletInfo {
-    address: string;
-    balance: string;
-    chainId: number;
-    network: string;
+  address: string;
+  balance: string;
+  network: string;
 }
 
 class WalletService {
-    private provider: ethers.providers.Web3Provider | null = null;
-    private signer: ethers.Signer | null = null;
+  private connected: boolean = false;
 
-    async connectWallet(): Promise<WalletInfo> {
-        if (!window.ethereum) {
-            throw new Error('MetaMask is not installed');
-        }
-
-        try {
-            // Request account access
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-            
-            this.provider = new ethers.providers.Web3Provider(window.ethereum);
-            this.signer = this.provider.getSigner();
-            
-            const address = await this.signer.getAddress();
-            const balance = ethers.utils.formatEther(await this.provider.getBalance(address));
-            const network = await this.provider.getNetwork();
-            
-            return {
-                address,
-                balance,
-                chainId: network.chainId,
-                network: network.name
-            };
-        } catch (error) {
-            console.error('Error connecting wallet:', error);
-            throw error;
-        }
+  async connectWallet(): Promise<WalletInfo> {
+    if (!window.aptos) {
+      throw new Error("Petra wallet is not installed");
     }
 
-    async switchNetwork(chainId: number): Promise<void> {
-        if (!this.provider) {
-            throw new Error('Wallet not connected');
-        }
+    try {
+      // Request account access
+      const response = await window.aptos.connect();
 
-        try {
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: `0x${chainId.toString(16)}` }],
-            });
-        } catch (error: any) {
-            if (error.code === 4902) {
-                // Chain not added, implement add chain logic here
-                throw new Error('Network not available in MetaMask');
-            }
-            throw error;
-        }
+      // Get account info
+      const account = await window.aptos.account();
+      if (!account) {
+        throw new Error("Failed to get account information");
+      }
+
+      // Get network info
+      const networkInfo = await window.aptos.network();
+
+      // Get balance - Note: This is a simplified approach
+      // In a real app, you would need to query the Aptos blockchain for the actual balance
+      const balance = "0"; // Placeholder - would need actual API call to get balance
+
+      this.connected = true;
+
+      return {
+        address: account.address,
+        balance: balance,
+        network: networkInfo.name,
+      };
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+      throw error;
+    }
+  }
+
+  async switchNetwork(network: string): Promise<void> {
+    if (!this.connected) {
+      throw new Error("Wallet not connected");
     }
 
-    async disconnect(): Promise<void> {
-        this.provider = null;
-        this.signer = null;
+    try {
+      // Note: Petra wallet doesn't have a direct method to switch networks
+      // Users need to switch networks manually in the wallet interface
+      throw new Error(
+        "Network switching not supported directly. Please switch networks in the Petra wallet extension."
+      );
+    } catch (error: any) {
+      throw error;
     }
+  }
 
-    isConnected(): boolean {
-        return this.provider !== null;
+  async disconnect(): Promise<void> {
+    if (window.aptos) {
+      try {
+        await window.aptos.disconnect();
+        this.connected = false;
+      } catch (error) {
+        console.error("Error disconnecting wallet:", error);
+        throw error;
+      }
     }
+  }
+
+  isConnected(): boolean {
+    return this.connected;
+  }
 }
 
 export const walletService = new WalletService();
