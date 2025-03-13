@@ -1,0 +1,10 @@
+[package]
+name = "aether_ai"
+version = "1.0.0"
+authors = ["AetherAI"]
+
+[addresses]
+aether_ai = "0x23306993ed0d0feb8ef9d97cd6853cf54b21ac058a5c2fddda801020cb7c5789"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main" }
