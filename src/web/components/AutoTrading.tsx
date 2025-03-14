@@ -23,8 +23,17 @@ import {
   Switch,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   tradingBotService,
   TradingStats,
@@ -33,6 +42,7 @@ import { usePetra } from "../providers/PetraProvider";
 
 const AutoTrading: React.FC = () => {
   const { account } = usePetra();
+  const theme = useTheme();
   const [selectedStrategy, setSelectedStrategy] = useState<string>("");
   const [isRunning, setIsRunning] = useState(false);
   const [investmentAmount, setInvestmentAmount] = useState("");
@@ -41,6 +51,9 @@ const AutoTrading: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [performanceData, setPerformanceData] = useState<
+    Array<{ time: string; profit: number }>
+  >([]);
   const [stats, setStats] = useState<TradingStats>({
     totalProfit: 0,
     totalTrades: 0,
@@ -53,20 +66,26 @@ const AutoTrading: React.FC = () => {
 
   useEffect(() => {
     if (account) {
-      // Check if bot is already running
-      const isActive = tradingBotService.isRunning(account);
-      setIsRunning(isActive);
-
-      if (isActive) {
-        // Load existing config
-        const config = tradingBotService.getConfig(account);
-        if (config) {
-          setSelectedStrategy(config.strategy);
-          setInvestmentAmount(config.investmentAmount.toString());
-          setStopLoss(config.stopLoss?.toString() || "");
-          setTakeProfit(config.takeProfit?.toString() || "");
+      const loadStrategyDetails = async () => {
+        try {
+          const strategyDetails =
+            await tradingBotService.aptosService.getStrategyDetails(
+              account,
+              Date.now()
+            );
+          if (strategyDetails) {
+            const params = JSON.parse(strategyDetails[1]);
+            setSelectedStrategy(params.strategy_id);
+            setInvestmentAmount(params.investment_amount.toString());
+            setStopLoss(params.stop_loss?.toString() || "");
+            setTakeProfit(params.take_profit?.toString() || "");
+            setIsRunning(true);
+          }
+        } catch (error) {
+          console.error("Failed to load strategy:", error);
         }
-      }
+      };
+      loadStrategyDetails();
     }
   }, [account]);
 
@@ -76,6 +95,15 @@ const AutoTrading: React.FC = () => {
         const currentStats = tradingBotService.getStats(account);
         if (currentStats) {
           setStats(currentStats);
+          setPerformanceData((prev) =>
+            [
+              ...prev,
+              {
+                time: new Date().toLocaleTimeString(),
+                profit: currentStats.totalProfit,
+              },
+            ].slice(-20)
+          );
         }
       }, 5000);
       return () => clearInterval(interval);
@@ -84,7 +112,7 @@ const AutoTrading: React.FC = () => {
 
   const handleStartTrading = async () => {
     if (!account) {
-      setError("Please connect your wallet first");
+      setError("Please connect your Petra wallet first");
       return;
     }
 
@@ -93,7 +121,9 @@ const AutoTrading: React.FC = () => {
       return;
     }
 
-    const strategy = tradingBotService.getStrategy(selectedStrategy);
+    const strategy = tradingBotService.strategies.find(
+      (s) => s.id === selectedStrategy
+    );
     if (!strategy) {
       setError("Invalid strategy selected");
       return;
@@ -349,6 +379,22 @@ const AutoTrading: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Trading Statistics
             </Typography>
+            <Box sx={{ height: 200, mb: 3 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={performanceData}>
+                  <XAxis dataKey="time" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="profit"
+                    stroke={theme.palette.primary.main}
+                    fill={theme.palette.primary.light}
+                    fillOpacity={0.3}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </Box>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Card>
@@ -408,12 +454,27 @@ const AutoTrading: React.FC = () => {
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                       <Timeline color="primary" />
                       <Typography variant="subtitle1" sx={{ ml: 1 }}>
-                        Active Time
+                        Active Time & Last Price
                       </Typography>
                     </Box>
-                    <Typography variant="h6">
-                      {formatDuration(stats.activeTime)}
-                    </Typography>
+                    <Grid container spacing={1}>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">
+                          Active Time
+                        </Typography>
+                        <Typography variant="h6">
+                          {formatDuration(stats.activeTime)}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="body2" color="text.secondary">
+                          Last Price
+                        </Typography>
+                        <Typography variant="h6">
+                          ${stats.lastPrice.toFixed(2)}
+                        </Typography>
+                      </Grid>
+                    </Grid>
                   </CardContent>
                 </Card>
               </Grid>

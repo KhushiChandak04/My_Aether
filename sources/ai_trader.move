@@ -87,6 +87,7 @@ module aether_ai::ai_trader {
         new_parameters: vector<u8>
     ) acquires TradingStrategy {
         let addr = signer::address_of(account);
+        assert!(exists<TradingStrategy>(addr), ESTRATEGY_NOT_FOUND);
         let strategy = borrow_global_mut<TradingStrategy>(addr);
         
         assert!(strategy.id == strategy_id, ESTRATEGY_NOT_FOUND);
@@ -100,6 +101,7 @@ module aether_ai::ai_trader {
         addr: address,
         strategy_id: u64
     ): (vector<u8>, vector<u8>, u64) acquires TradingStrategy {
+        assert!(exists<TradingStrategy>(addr), ESTRATEGY_NOT_FOUND);
         let strategy = borrow_global<TradingStrategy>(addr);
         assert!(strategy.id == strategy_id, ESTRATEGY_NOT_FOUND);
         

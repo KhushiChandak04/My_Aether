@@ -1,5 +1,5 @@
 import Web3 from "web3";
-
+import { AptosService } from "./aptosService";
 export interface TradingStrategy {
   id: string;
   name: string;
@@ -12,7 +12,6 @@ export interface TradingStrategy {
   defaultStopLoss: number;
   defaultTakeProfit: number;
 }
-
 export interface TradingStats {
   totalProfit: number;
   totalTrades: number;
@@ -22,7 +21,6 @@ export interface TradingStats {
   currentPosition: "long" | "short" | null;
   lastTradeTime: Date | null;
 }
-
 export interface TradingBotConfig {
   strategy: string;
   investmentAmount: number;
@@ -30,18 +28,73 @@ export interface TradingBotConfig {
   takeProfit?: number;
   walletAddress: string;
 }
-
 class TradingBotService {
   private web3Instance: Web3;
   private activeConfigs: Map<string, TradingBotConfig> = new Map();
   private tradingStats: Map<string, TradingStats> = new Map();
   private intervals: Map<string, NodeJS.Timeout> = new Map();
-
+  private aptosService: AptosService;
   constructor() {
     if (typeof window !== "undefined" && window.ethereum) {
       this.web3Instance = new Web3(window.ethereum);
     } else {
-      this.web3Instance = new Web3("http://localhost:8545"); // Fallback to local node
+      this.web3Instance = new Web3("http://localhost:8545");
+    }
+    this.aptosService = new AptosService();
+  }
+
+  public async startTrading(config: TradingBotConfig) {
+    try {
+      // Register strategy on blockchain
+      const strategy = this.getStrategy(config.strategy);
+      if (!strategy) throw new Error("Invalid strategy");
+
+      const params = JSON.stringify({
+        risk_level: strategy.risk.toLowerCase(),
+        investment_amount: config.investmentAmount,
+        stop_loss: config.stopLoss,
+        take_profit: config.takeProfit,
+      });
+
+      await this.aptosService.registerStrategy(
+        config.walletAddress,
+        strategy.name,
+        params
+      );
+
+      this.activeConfigs.set(config.walletAddress, config);
+      this.tradingStats.set(config.walletAddress, this.getInitialStats());
+
+      const interval = setInterval(
+        () => this.executeTrading(config.walletAddress),
+        60000
+      );
+      this.intervals.set(config.walletAddress, interval);
+    } catch (error) {
+      console.error("Failed to start trading:", error);
+      throw error;
+    }
+  }
+
+  private async executeTrading(walletAddress: string) {
+    const config = this.activeConfigs.get(walletAddress);
+    if (!config) return;
+
+    try {
+      const currentPrice = await this.getCurrentPrice();
+      const action = this.determineTradeAction(currentPrice);
+
+      if (action) {
+        await this.aptosService.executeTrade(
+          walletAddress,
+          Date.now(), // Using timestamp as strategy ID
+          action,
+          config.investmentAmount,
+          currentPrice
+        );
+      }
+    } catch (error) {
+      console.error("Failed to execute trade:", error);
     }
   }
 

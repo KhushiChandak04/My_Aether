@@ -4,7 +4,7 @@ version = "1.0.0"
 authors = ["AetherAI"]
 
 [addresses]
-aether_ai = "0x23306993ed0d0feb8ef9d97cd6853cf54b21ac058a5c2fddda801020cb7c5789"
+aether_ai = "0x28b16dd6d82b32f9322547f77f465460f5354cc9587c09a0735001456efd3c3e"
 
 [dependencies]
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework", rev = "main" }
