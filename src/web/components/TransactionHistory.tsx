@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Paper,
@@ -17,7 +17,9 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    useTheme
+    useTheme,
+    CircularProgress,
+    Alert
 } from '@mui/material';
 import {
     TrendingUp,
@@ -39,36 +41,44 @@ interface Transaction {
     txHash: string;
 }
 
-// Mock data - replace with real data from your trading bot
-const mockTransactions: Transaction[] = [
-    {
-        id: '1',
-        type: 'buy',
-        token: 'ETH',
-        amount: 0.5,
-        price: 3000,
-        timestamp: Date.now() - 3600000,
-        status: 'completed',
-        txHash: '0x123...abc'
-    },
-    {
-        id: '2',
-        type: 'sell',
-        token: 'ETH',
-        amount: 0.5,
-        price: 3100,
-        timestamp: Date.now() - 1800000,
-        profit: 50,
-        status: 'completed',
-        txHash: '0x456...def'
-    },
-];
-
 const TransactionHistory: React.FC = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const theme = useTheme();
+
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await fetch('/api/trades/history');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch transactions');
+                }
+
+                const data = await response.json();
+                setTransactions(data);
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : 'Error fetching transactions';
+                setError(errorMessage);
+                console.error('Error fetching transactions:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTransactions();
+        
+        // Set up auto-refresh every 30 seconds
+        const intervalId = setInterval(fetchTransactions, 30000);
+        
+        return () => clearInterval(intervalId);
+    }, []);
 
     const handleChangePage = (_event: unknown, newPage: number) => {
         setPage(newPage);
@@ -96,6 +106,22 @@ const TransactionHistory: React.FC = () => {
         }
     };
 
+    if (loading && transactions.length === 0) {
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+            </Alert>
+        );
+    }
+
     return (
         <>
             <Paper 
@@ -109,6 +135,7 @@ const TransactionHistory: React.FC = () => {
                 <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <AccessTime />
                     Transaction History
+                    {loading && <CircularProgress size={20} sx={{ ml: 2 }} />}
                 </Typography>
                 
                 <TableContainer>
@@ -126,7 +153,7 @@ const TransactionHistory: React.FC = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {mockTransactions
+                            {transactions
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((tx) => (
                                     <TableRow key={tx.id} hover>
@@ -186,7 +213,7 @@ const TransactionHistory: React.FC = () => {
                 
                 <TablePagination
                     component="div"
-                    count={mockTransactions.length}
+                    count={transactions.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
@@ -199,7 +226,7 @@ const TransactionHistory: React.FC = () => {
                 <DialogContent>
                     {selectedTx && (
                         <Box sx={{ mt: 2 }}>
-                            <Typography><strong>Transaction Hash:</strong> {selectedTx.txHash}</Typography>
+                            <Typography><strong>Transaction ID:</strong> {selectedTx.id}</Typography>
                             <Typography><strong>Type:</strong> {selectedTx.type.toUpperCase()}</Typography>
                             <Typography><strong>Token:</strong> {selectedTx.token}</Typography>
                             <Typography><strong>Amount:</strong> {selectedTx.amount}</Typography>
@@ -207,28 +234,29 @@ const TransactionHistory: React.FC = () => {
                             {selectedTx.profit !== undefined && (
                                 <Typography>
                                     <strong>Profit/Loss:</strong>{' '}
-                                    <span style={{ color: selectedTx.profit >= 0 ? '#4caf50' : '#f44336' }}>
+                                    <span style={{ color: selectedTx.profit >= 0 ? '#2e7d32' : '#d32f2f' }}>
                                         ${selectedTx.profit.toLocaleString()}
                                     </span>
                                 </Typography>
                             )}
                             <Typography><strong>Time:</strong> {formatTimestamp(selectedTx.timestamp)}</Typography>
-                            <Typography><strong>Status:</strong> {selectedTx.status.toUpperCase()}</Typography>
+                            <Typography><strong>Status:</strong> {selectedTx.status}</Typography>
+                            <Typography><strong>Transaction Hash:</strong> {selectedTx.txHash}</Typography>
                         </Box>
                     )}
                 </DialogContent>
                 <DialogActions>
+                    <Button onClick={() => setSelectedTx(null)}>Close</Button>
                     {selectedTx && (
                         <Button
                             href={`https://etherscan.io/tx/${selectedTx.txHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            color="primary"
+                            variant="contained"
                         >
                             View on Etherscan
                         </Button>
                     )}
-                    <Button onClick={() => setSelectedTx(null)}>Close</Button>
                 </DialogActions>
             </Dialog>
         </>
