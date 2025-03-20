@@ -62,7 +62,11 @@ const TransactionHistory: React.FC = () => {
                 }
 
                 const data = await response.json();
-                setTransactions(data);
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to fetch transactions');
+                }
+                setTransactions(data.data || []);
+                setError(null);
             } catch (error: unknown) {
                 const errorMessage = error instanceof Error ? error.message : 'Error fetching transactions';
                 setError(errorMessage);

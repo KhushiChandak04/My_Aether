@@ -1,5 +1,21 @@
 import Web3 from "web3";
 import { AptosService } from "./aptosService";
+import { api } from "./api";
+import type { provider } from "web3-core";
+
+export interface TradeHistory {
+  _id?: string;
+  walletAddress: string;
+  strategy: string;
+  type: "buy" | "sell";
+  amount: number;
+  price: number;
+  timestamp: Date;
+  status: "pending" | "completed" | "failed";
+  profit?: number;
+  txHash?: string;
+}
+
 export interface TradingStrategy {
   id: string;
   name: string;
@@ -12,6 +28,7 @@ export interface TradingStrategy {
   defaultStopLoss: number;
   defaultTakeProfit: number;
 }
+
 export interface TradingStats {
   totalProfit: number;
   totalTrades: number;
@@ -21,6 +38,7 @@ export interface TradingStats {
   currentPosition: "long" | "short" | null;
   lastTradeTime: Date | null;
 }
+
 export interface TradingBotConfig {
   strategy: string;
   investmentAmount: number;
@@ -28,15 +46,19 @@ export interface TradingBotConfig {
   takeProfit?: number;
   walletAddress: string;
 }
+
 class TradingBotService {
   private web3Instance: Web3;
   private activeConfigs: Map<string, TradingBotConfig> = new Map();
   private tradingStats: Map<string, TradingStats> = new Map();
   private intervals: Map<string, NodeJS.Timeout> = new Map();
   private aptosService: AptosService;
+
   constructor() {
     if (typeof window !== "undefined" && window.ethereum) {
-      this.web3Instance = new Web3(window.ethereum);
+      // Cast window.ethereum to provider type for Web3
+      const provider = window.ethereum as unknown as provider;
+      this.web3Instance = new Web3(provider);
     } else {
       this.web3Instance = new Web3("http://localhost:8545");
     }
@@ -56,20 +78,36 @@ class TradingBotService {
         take_profit: config.takeProfit,
       });
 
+      // Register strategy with Aptos
       await this.aptosService.registerStrategy(
         config.walletAddress,
         strategy.name,
         params
       );
 
+      // Initialize trading state
       this.activeConfigs.set(config.walletAddress, config);
       this.tradingStats.set(config.walletAddress, this.getInitialStats());
 
+      // Start trading interval
       const interval = setInterval(
         () => this.executeTrading(config.walletAddress),
         60000
       );
       this.intervals.set(config.walletAddress, interval);
+
+      // Record initial strategy registration
+      await this.recordTrade({
+        walletAddress: config.walletAddress,
+        strategy: config.strategy,
+        type: "buy", // Initial position is considered a buy
+        amount: config.investmentAmount,
+        price: await this.getCurrentPrice(),
+        timestamp: new Date(),
+        status: "completed",
+        txHash: `0x${Date.now().toString(16)}${Math.random().toString(16).substring(2)}`
+      });
+
     } catch (error) {
       console.error("Failed to start trading:", error);
       throw error;
@@ -85,17 +123,100 @@ class TradingBotService {
       const action = this.determineTradeAction(currentPrice);
 
       if (action) {
-        await this.aptosService.executeTrade(
+        // Record trade in database first
+        const trade = {
           walletAddress,
-          Date.now(), // Using timestamp as strategy ID
-          action,
-          config.investmentAmount,
-          currentPrice
-        );
+          strategy: config.strategy,
+          type: action,
+          amount: config.investmentAmount,
+          price: currentPrice,
+          timestamp: new Date(),
+          status: "pending" as const,
+          txHash: `0x${Date.now().toString(16)}${Math.random().toString(16).substring(2)}`
+        };
+
+        await this.recordTrade(trade);
+
+        try {
+          // Execute trade on Aptos blockchain
+          await this.aptosService.executeTrade(
+            walletAddress,
+            config.strategy,
+            config.investmentAmount,
+            currentPrice,
+            action
+          );
+
+          // Update trade status to completed
+          await this.recordTrade({
+            ...trade,
+            status: "completed",
+            profit: action === 'sell' ? (currentPrice * config.investmentAmount * 0.02) : undefined
+          });
+
+          // Update trading stats
+          const stats = this.tradingStats.get(walletAddress) || this.getInitialStats();
+          stats.lastPrice = currentPrice;
+          stats.lastTradeTime = new Date();
+          stats.totalTrades++;
+          if (action === 'sell') {
+            stats.totalProfit += (currentPrice * config.investmentAmount * 0.02);
+          }
+          this.tradingStats.set(walletAddress, stats);
+
+        } catch (error) {
+          console.error("Failed to execute trade on blockchain:", error);
+          // Update trade status to failed
+          await this.recordTrade({
+            ...trade,
+            status: "failed"
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to execute trade:", error);
     }
+  }
+
+  private async getCurrentPrice(): Promise<number> {
+    try {
+      const response = await fetch('/api/market/crypto');
+      const data = await response.json();
+      
+      // CoinGecko returns an array of coins, we want ETH (usually index 1 or 2)
+      const ethData = data.find((coin: any) => 
+        coin.symbol.toLowerCase() === 'eth' || 
+        coin.id.toLowerCase() === 'ethereum'
+      );
+
+      if (!ethData) {
+        throw new Error('ETH price data not available');
+      }
+
+      return ethData.current_price;
+    } catch (error) {
+      console.error('Error getting current price:', error);
+      // Return a simulated price if API fails
+      const basePrice = 1800; // Base ETH price
+      const variance = 50; // Price variance
+      return basePrice + (Math.random() * variance * 2 - variance);
+    }
+  }
+
+  private determineTradeAction(currentPrice: number): 'buy' | 'sell' | null {
+    const lastStats = Array.from(this.tradingStats.values())[0];
+    if (!lastStats) return null;
+
+    const priceChange = lastStats.lastPrice ? (currentPrice - lastStats.lastPrice) / lastStats.lastPrice : 0;
+    
+    // Simple trading logic based on price movement
+    if (priceChange > 0.02) { // Price increased by 2%
+      return 'sell';
+    } else if (priceChange < -0.02) { // Price decreased by 2%
+      return 'buy';
+    }
+    
+    return null;
   }
 
   public readonly strategies: TradingStrategy[] = [
@@ -164,6 +285,14 @@ class TradingBotService {
     };
   }
 
+  private async recordTrade(trade: Omit<TradeHistory, "_id">): Promise<void> {
+    try {
+      await api.recordTrade(trade);
+    } catch (error) {
+      console.error("Failed to record trade:", error);
+    }
+  }
+
   private async simulateTrading(
     walletAddress: string,
     config: TradingBotConfig
@@ -181,83 +310,113 @@ class TradingBotService {
       walletAddress.startsWith("0x") && walletAddress.length === 66;
 
     if (isAptosAddress) {
-      // For Aptos addresses, use a simulated balance instead of trying to query with Web3
       console.log("Detected Aptos address, using simulated balance");
-      // Use a random value between 1-10 ETH equivalent for simulation
       ethBalance = 1 + Math.random() * 9;
     } else {
       try {
-        // Get current ETH balance for Ethereum addresses
         const balance = await this.web3Instance.eth.getBalance(walletAddress);
         ethBalance = parseFloat(
           this.web3Instance.utils.fromWei(balance, "ether")
         );
       } catch (error) {
         console.error("Error getting wallet balance:", error);
-        // Fallback to a default value
         ethBalance = 1;
       }
     }
 
     // Simulate price movement
-    const priceChange = (Math.random() * 2 - 1) * 0.002; // Random price change ±0.2%
+    const priceChange = (Math.random() * 2 - 1) * 0.002;
     const newPrice = stats.lastPrice
       ? stats.lastPrice * (1 + priceChange)
       : ethBalance;
 
+    let tradeMade = false;
+    let tradeType: "buy" | "sell" = "buy";
+    let tradeProfit = 0;
+
     // Trading logic based on strategy
     switch (strategy.id) {
       case "grid":
-        // Place orders at fixed intervals
         if (!stats.currentPosition) {
+          tradeType = priceChange > 0 ? "buy" : "sell";
+          tradeMade = true;
           stats.currentPosition = priceChange > 0 ? "long" : "short";
-          stats.lastTradeTime = new Date();
-          stats.totalTrades++;
         }
         break;
 
       case "momentum":
-        // Follow the trend
         if (priceChange > 0 && stats.currentPosition !== "long") {
+          tradeType = "buy";
+          tradeMade = true;
           stats.currentPosition = "long";
-          stats.lastTradeTime = new Date();
-          stats.totalTrades++;
         } else if (priceChange < 0 && stats.currentPosition !== "short") {
+          tradeType = "sell";
+          tradeMade = true;
           stats.currentPosition = "short";
-          stats.lastTradeTime = new Date();
-          stats.totalTrades++;
         }
         break;
 
       case "arbitrage":
-        // Simulate finding arbitrage opportunities
         if (Math.random() > 0.8) {
-          // 20% chance of finding opportunity
-          stats.currentPosition = Math.random() > 0.5 ? "long" : "short";
-          stats.lastTradeTime = new Date();
-          stats.totalTrades++;
+          tradeType = Math.random() > 0.5 ? "buy" : "sell";
+          tradeMade = true;
+          stats.currentPosition = tradeType === "buy" ? "long" : "short";
         }
         break;
 
       case "mean-reversion":
-        // Trade against extreme moves
         if (Math.abs(priceChange) > 0.001) {
-          stats.currentPosition = priceChange > 0 ? "short" : "long";
-          stats.lastTradeTime = new Date();
-          stats.totalTrades++;
+          tradeType = priceChange > 0 ? "sell" : "buy";
+          tradeMade = true;
+          stats.currentPosition = tradeType === "buy" ? "long" : "short";
         }
         break;
     }
 
+    if (tradeMade) {
+      stats.lastTradeTime = new Date();
+      stats.totalTrades++;
+
+      // Calculate trade profit for sells
+      tradeProfit = tradeType === "sell" ? config.investmentAmount * Math.abs(priceChange) : 0;
+      
+      try {
+        // Record the trade with pending status
+        const trade = {
+          walletAddress,
+          strategy: strategy.id,
+          type: tradeType,
+          amount: config.investmentAmount,
+          price: newPrice,
+          timestamp: stats.lastTradeTime,
+          status: "pending" as const,
+          txHash: `0x${Date.now().toString(16)}${Math.random().toString(16).substring(2)}`
+        };
+
+        await this.recordTrade(trade);
+
+        // Simulate blockchain delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Update trade as completed
+        await this.recordTrade({
+          ...trade,
+          status: "completed",
+          profit: tradeProfit > 0 ? tradeProfit : undefined
+        });
+
+      } catch (error) {
+        console.error("Failed to record simulated trade:", error);
+      }
+    }
+
     // Update stats
-    const profitChange =
-      stats.currentPosition === "long" ? priceChange : -priceChange;
-    stats.totalProfit += profitChange * config.investmentAmount;
+    stats.totalProfit += tradeProfit;
     stats.lastPrice = newPrice;
     stats.activeTime++;
 
     if (stats.totalTrades > 0) {
-      const successRate = Math.random(); // Simulate win rate based on strategy
+      const successRate = Math.random();
       stats.winRate =
         (stats.winRate * (stats.totalTrades - 1) +
           (successRate > 0.5 ? 1 : 0)) /
@@ -315,40 +474,6 @@ class TradingBotService {
     return this.strategies.find((s) => s.id === strategyId);
   }
 
-  private async executeTradeOnChain(
-    walletAddress: string,
-    config: TradingBotConfig,
-    action: string,
-    amount: number,
-    price: number
-  ) {
-    try {
-      // Prepare transaction payload for Move contract
-      const payload = {
-        function: "execute_trade",
-        type_arguments: ["0x1::aptos_coin::AptosCoin"],
-        arguments: [
-          config.strategy,
-          new TextEncoder().encode(action),
-          Math.floor(amount * 100_000_000), // Convert to Octas
-          Math.floor(price * 100_000_000), // Convert to Octas
-        ],
-      };
-
-      // Submit transaction
-      const transaction = await this.web3Instance.eth.sendTransaction({
-        from: walletAddress,
-        to: config.walletAddress,
-        data: JSON.stringify(payload),
-      });
-
-      console.log("Trade executed on-chain:", transaction.transactionHash);
-      return transaction;
-    } catch (error) {
-      console.error("Error executing trade on-chain:", error);
-      throw error;
-    }
-  }
 }
 
 export const tradingBotService = new TradingBotService();

@@ -1,198 +1,124 @@
-import cors from "cors";
-import express from "express";
-import { createServer } from "http";
-import { WebSocket, WebSocketServer } from "ws";
-import { AetherAI } from "./index";
-import liquidityRoutes from "./server/routes/liquidity";
-import marketRoutes from "./server/routes/market";
-import { AITradingBot } from "./trading-bot";
+import express from 'express';
+import cors from 'cors';
+import { connectToDatabase } from './lib/mongodb';
+import marketRoutes from './server/routes/market';
+import tradeRoutes from './server/routes/trades';
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Initialize trading bot
-const nodeUrl =
-  process.env.APTOS_NODE_URL || "https://fullnode.devnet.aptoslabs.com/v1";
-const ai = new AetherAI(nodeUrl);
-let tradingBot: AITradingBot | null = null;
-let strategyId: number = Date.now();
+// Initialize database and create collections if needed
+async function initializeDatabase() {
+  try {
+    const { db } = await connectToDatabase();
 
-// Create HTTP server
-const server = createServer(app);
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
 
-// WebSocket server
-const wss = new WebSocketServer({ server });
-const clients = new Set<WebSocket>();
+    const requiredCollections = [
+      { name: 'market_data', schema: {
+        bsonType: "object",
+        required: ["id", "symbol", "name", "current_price"],
+        properties: {
+          id: { bsonType: "string" },
+          symbol: { bsonType: "string" },
+          name: { bsonType: "string" },
+          current_price: { bsonType: "number" },
+          market_cap: { bsonType: "number" },
+          price_change_percentage_24h: { bsonType: "number" }
+        }
+      }},
+      { name: 'trades', schema: {
+        bsonType: "object",
+        required: ["type", "token", "amount", "price", "timestamp", "status", "txHash"],
+        properties: {
+          type: { enum: ["buy", "sell"] },
+          token: { bsonType: "string" },
+          amount: { bsonType: "number" },
+          price: { bsonType: "number" },
+          timestamp: { bsonType: "number" },
+          status: { enum: ["pending", "completed"] },
+          txHash: { bsonType: "string" },
+          profit: { bsonType: "number" }
+        }
+      }}
+    ];
 
-// Broadcast to all connected clients
-const broadcast = (data: any) => {
-  const message = JSON.stringify(data);
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
+    for (const { name, schema } of requiredCollections) {
+      if (!collectionNames.includes(name)) {
+        await db.createCollection(name, { validator: { $jsonSchema: schema } });
+        console.log(`✓ Created ${name} collection`);
+      }
     }
+
+    await db.collection('trades').createIndex({ timestamp: -1 });
+    await db.collection('trades').createIndex({ token: 1 });
+    await db.collection('market_data').createIndex({ symbol: 1 });
+
+    console.log('✓ Database initialization complete');
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+    throw error;
+  }
+}
+
+// Health check endpoint
+app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+
+// Routes
+app.use('/api/market', marketRoutes);
+app.use('/api/trades', tradeRoutes);
+
+// Error handling middleware
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Server error:', err);
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error',
+    message: err.message
   });
-};
-
-// Handle WebSocket connections
-wss.on("connection", (ws: WebSocket) => {
-  console.log("New client connected");
-  clients.add(ws);
-
-  // Send current status
-  ws.send(
-    JSON.stringify({
-      type: "status",
-      status: {
-        initialized: tradingBot !== null,
-        running: tradingBot?.isRunning() || false,
-      },
-    })
-  );
-
-  ws.on("close", () => {
-    console.log("Client disconnected");
-    clients.delete(ws);
-  });
-});
-
-// Mount routes
-app.use("/api/liquidity", liquidityRoutes);
-app.use("/api/market", marketRoutes);
-
-// API Routes
-app.use("/api/status", (_req, res) => {
-  res.json({
-    initialized: tradingBot !== null,
-    running: tradingBot?.isRunning() || false,
-  });
-});
-
-app.post("/api/create-wallet", async (_req, res) => {
-  try {
-    const address = await ai.initializeWallet("trading_bot");
-    await ai.fundWalletForTesting();
-    res.json({ address });
-  } catch (error) {
-    console.error("Error creating wallet:", error);
-    res.status(500).json({ error: "Failed to create wallet" });
-  }
-});
-
-app.post("/api/initialize", async (_req, res) => {
-  try {
-    if (!tradingBot) {
-      tradingBot = new AITradingBot(nodeUrl, strategyId);
-
-      // Set up event listeners
-      tradingBot.on("tradingSignal", (signal) => {
-        broadcast({ type: "signal", signal });
-      });
-
-      tradingBot.on("tradeExecuted", (data) => {
-        broadcast({
-          type: "trade",
-          trade: {
-            action: data.signal.action,
-            amount: data.signal.amount.toString(),
-            timestamp: data.timestamp,
-            txHash: data.transaction.hash,
-          },
-        });
-      });
-
-      tradingBot.on("tradeError", (data) => {
-        broadcast({
-          type: "error",
-          error: data.error.message,
-        });
-      });
-
-      await tradingBot.initialize();
-      broadcast({
-        type: "status",
-        status: {
-          initialized: true,
-          running: false,
-        },
-      });
-    }
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Error initializing bot:", error);
-    res.status(500).json({ error: "Failed to initialize bot" });
-  }
-});
-
-app.post("/api/start", async (_req, res) => {
-  try {
-    if (!tradingBot) {
-      throw new Error("Trading bot not initialized");
-    }
-    await tradingBot.start();
-    broadcast({
-      type: "status",
-      status: {
-        initialized: true,
-        running: true,
-      },
-    });
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Error starting bot:", error);
-    res.status(500).json({ error: "Failed to start bot" });
-  }
-});
-
-app.post("/api/stop", async (_req, res) => {
-  try {
-    if (!tradingBot) {
-      throw new Error("Trading bot not initialized");
-    }
-    tradingBot.stop();
-    broadcast({
-      type: "status",
-      status: {
-        initialized: true,
-        running: false,
-      },
-    });
-    res.json({ success: true });
-  } catch (error) {
-    console.error("Error stopping bot:", error);
-    res.status(500).json({ error: "Failed to stop bot" });
-  }
-});
-
-app.post("/api/register-strategy", async (req, res) => {
-  try {
-    if (!tradingBot) {
-      throw new Error("Trading bot not initialized");
-    }
-
-    const { name, parameters } = req.body;
-    const transaction = await ai.registerStrategy(
-      name,
-      JSON.stringify(parameters)
-    );
-
-    res.json({
-      success: true,
-      transaction: {
-        hash: transaction.hash,
-        url: `https://explorer.aptoslabs.com/txn/${transaction.hash}?network=devnet`,
-      },
-    });
-  } catch (error) {
-    console.error("Error registering strategy:", error);
-    res.status(500).json({ error: "Failed to register strategy" });
-  }
 });
 
 // Start server
-server.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+async function startServer() {
+  try {
+    await initializeDatabase();
+    const server = app.listen(port, () => {
+      console.log(`✓ Server running on port ${port}`);
+      console.log(`  Health check: http://localhost:${port}/health`);
+      console.log(`  Market API: http://localhost:${port}/api/market/crypto`);
+      console.log(`  Trades API: http://localhost:${port}/api/trades`);
+    });
+
+    server.on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${port} is already in use. Please try a different port.`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', error);
+        process.exit(1);
+      }
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  process.exit(1);
 });
+
+process.on('unhandledRejection', (error) => {
+  console.error('Unhandled rejection:', error);
+  process.exit(1);
+});
+
+startServer();
+
+export default app;

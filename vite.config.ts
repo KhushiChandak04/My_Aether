@@ -9,10 +9,30 @@ export default defineConfig({
   server: {
     port: 4000,
     proxy: {
-      '/api': 'http://localhost:3001',
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Proxy Error:', err);
+          });
+          proxy.on('proxyReq', (_proxyReq, req, _res) => {
+            console.log('Sending Request:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response:', proxyRes.statusCode, req.url);
+          });
+        },
+        rewrite: (path) => {
+          console.log('Rewriting path:', path);
+          return path.replace(/^\/api/, '/api');  // Ensure '/api' prefix is preserved
+        }
+      },
       '/ws': {
-        target: 'ws://localhost:3001',
+        target: 'ws://localhost:3000',
         ws: true,
+        changeOrigin: true
       },
     },
   },

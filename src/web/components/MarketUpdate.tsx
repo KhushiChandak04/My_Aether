@@ -11,7 +11,6 @@ import {
   Chip,
   CircularProgress,
   IconButton,
-  Tooltip as MuiTooltip,
   Paper,
   Table,
   TableBody,
@@ -21,15 +20,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Area,
   AreaChart,
-  CartesianGrid,
   ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
 } from "recharts";
 
 interface CryptoData {
@@ -67,31 +62,52 @@ const MarketUpdate: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 5000; // 5 seconds
 
-  const fetchCryptoData = async () => {
+  const fetchCryptoData = useCallback(async (isRetry = false) => {
     try {
-      setLoading(true);
-      const response = await fetch("http://localhost:3001/api/market/crypto");
-      if (!response.ok) {
-        throw new Error("Failed to fetch crypto data");
+      if (!isRetry) {
+        setLoading(true);
       }
+      
+      const response = await fetch("http://localhost:4000/api/market/crypto", {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch crypto data: ${response.status}`);
+      }
+
       const data = await response.json();
       setCryptoData(data);
       setLastUpdated(new Date());
       setError(null);
+      setRetryCount(0);
     } catch (err) {
-      setError("Failed to fetch market data. Please try again later.");
       console.error("Error fetching crypto data:", err);
+      
+      if (retryCount < MAX_RETRIES) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => fetchCryptoData(true), RETRY_DELAY);
+        setError(`Retrying to fetch market data... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      } else {
+        setError("Failed to fetch market data. Please try again later.");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [retryCount]);
 
   useEffect(() => {
     fetchCryptoData();
-    const interval = setInterval(fetchCryptoData, 30000); // Update every 30 seconds
+    const interval = setInterval(() => fetchCryptoData(), 30000); // Update every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchCryptoData]);
 
   const toggleFavorite = (id: string) => {
     setFavorites((prev) =>
@@ -99,19 +115,16 @@ const MarketUpdate: React.FC = () => {
     );
   };
 
-  if (loading) {
+  const handleRefresh = () => {
+    setRetryCount(0);
+    fetchCryptoData();
+  };
+
+  if (loading && !cryptoData.length) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
         <CircularProgress />
       </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Paper sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
-      </Paper>
     );
   }
 
@@ -130,11 +143,24 @@ const MarketUpdate: React.FC = () => {
           <Typography variant="caption" color="text.secondary">
             Last updated: {lastUpdated.toLocaleTimeString()}
           </Typography>
-          <IconButton onClick={() => fetchCryptoData()} size="small">
+          <IconButton 
+            onClick={handleRefresh} 
+            size="small"
+            disabled={loading}
+          >
             <Refresh />
           </IconButton>
         </Box>
       </Box>
+
+      {error && (
+        <Alert 
+          severity={retryCount < MAX_RETRIES ? "info" : "error"} 
+          sx={{ mb: 2 }}
+        >
+          {error}
+        </Alert>
+      )}
 
       <TableContainer>
         <Table>
@@ -201,113 +227,47 @@ const MarketUpdate: React.FC = () => {
                   />
                 </TableCell>
                 <TableCell align="right">
-                  <Typography variant="body2">
-                    {formatPrice(crypto.market_cap)}
-                  </Typography>
+                  {formatPrice(crypto.market_cap)}
                 </TableCell>
-                <TableCell align="right" sx={{ width: 120, height: 60 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={crypto.sparkline_in_7d.price.map(
-                        (price, index) => ({
-                          time: index,
-                          value: price,
-                        })
-                      )}
-                      margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id={`gradient-${crypto.id}`}
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor={
-                              crypto.price_change_percentage_24h > 0
-                                ? "#4CAF50"
-                                : "#f44336"
-                            }
-                            stopOpacity={0.8}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor={
-                              crypto.price_change_percentage_24h > 0
-                                ? "#4CAF50"
-                                : "#f44336"
-                            }
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="time" hide={true} />
-                      <YAxis hide={true} domain={["auto", "auto"]} />
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (
-                            active &&
-                            payload &&
-                            payload.length &&
-                            payload[0].value != null
-                          ) {
-                            return (
-                              <Box
-                                sx={{
-                                  bgcolor: "background.paper",
-                                  p: 1,
-                                  border: 1,
-                                  borderColor: "divider",
-                                  borderRadius: 1,
-                                }}
-                              >
-                                <Typography variant="body2">
-                                  {formatPrice(Number(payload[0].value))}
-                                </Typography>
-                              </Box>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        stroke={
-                          crypto.price_change_percentage_24h > 0
-                            ? "#4CAF50"
-                            : "#f44336"
-                        }
-                        fillOpacity={1}
-                        fill={`url(#gradient-${crypto.id})`}
-                        isAnimationActive={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                <TableCell align="right" sx={{ width: 200 }}>
+                  {crypto.sparkline_in_7d && (
+                    <ResponsiveContainer width="100%" height={50}>
+                      <AreaChart data={crypto.sparkline_in_7d.price.map((price, i) => ({ price, i }))}>
+                        <defs>
+                          <linearGradient id={`gradient-${crypto.id}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop
+                              offset="5%"
+                              stopColor={crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336"}
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor={crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336"}
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <Area
+                          type="monotone"
+                          dataKey="price"
+                          stroke={crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336"}
+                          fill={`url(#gradient-${crypto.id})`}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </TableCell>
                 <TableCell>
-                  <MuiTooltip
-                    title={
-                      favorites.includes(crypto.id)
-                        ? "Remove from favorites"
-                        : "Add to favorites"
-                    }
+                  <IconButton
+                    size="small"
+                    onClick={() => toggleFavorite(crypto.id)}
                   >
-                    <IconButton
-                      size="small"
-                      onClick={() => toggleFavorite(crypto.id)}
-                    >
-                      {favorites.includes(crypto.id) ? (
-                        <Star sx={{ color: "warning.main" }} />
-                      ) : (
-                        <StarBorder />
-                      )}
-                    </IconButton>
-                  </MuiTooltip>
+                    {favorites.includes(crypto.id) ? (
+                      <Star sx={{ color: "warning.main" }} />
+                    ) : (
+                      <StarBorder />
+                    )}
+                  </IconButton>
                 </TableCell>
               </TableRow>
             ))}

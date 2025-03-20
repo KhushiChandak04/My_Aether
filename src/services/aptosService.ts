@@ -2,66 +2,67 @@ import { AptosClient, Types } from "aptos";
 
 export class AptosService {
   private client: AptosClient;
-  private moduleAddress =
-    "0x28b16dd6d82b32f9322547f77f465460f5354cc9587c09a0735001456efd3c3e";
+  private moduleAddress = "0xa08d5a46e1222477997445f50d64f52fae183f16bfa1d0b95e0d135bc8d15c46";
 
   constructor() {
     this.client = new AptosClient("https://fullnode.devnet.aptoslabs.com");
   }
 
   async registerStrategy(
-    account: Types.AccountAddress,
+    account: string,
     name: string,
-    params: string
+    param: string
   ) {
-    const payload = {
+    const payload: Types.TransactionPayload = {
       type: "entry_function_payload",
       function: `${this.moduleAddress}::ai_trader::register_strategy`,
       type_arguments: [],
-      arguments: [name, params],
+      arguments: [name, param],
     };
 
     return await this.client.generateTransaction(account, payload);
   }
 
   async executeTrade(
-    account: Types.AccountAddress,
-    strategyId: number,
-    action: string,
+    account: string,
+    strategyId: string,
     amount: number,
-    price: number
+    price: number,
+    tradeType: "buy" | "sell"
   ) {
-    const payload = {
+    const payload: Types.TransactionPayload = {
       type: "entry_function_payload",
       function: `${this.moduleAddress}::ai_trader::execute_trade`,
-      type_arguments: ["u8"],
-      arguments: [strategyId, action, amount, price],
+      type_arguments: [],
+      arguments: [strategyId, amount.toString(), price.toString(), tradeType],
     };
 
     return await this.client.generateTransaction(account, payload);
   }
 
   async updateStrategy(
-    account: Types.AccountAddress,
-    strategyId: number,
-    newParams: string
+    account: string,
+    strategyId: string,
+    newParam: string
   ) {
-    const payload = {
+    const payload: Types.TransactionPayload = {
       type: "entry_function_payload",
       function: `${this.moduleAddress}::ai_trader::update_strategy`,
       type_arguments: [],
-      arguments: [strategyId, newParams],
+      arguments: [strategyId, newParam],
     };
 
     return await this.client.generateTransaction(account, payload);
   }
 
-  async getStrategyDetails(owner: Types.AccountAddress, strategyId: number) {
-    const payload = {
-      type: "view_function",
+  async getStrategyDetails(
+    account: string,
+    strategyId: number
+  ) {
+    const payload: Types.ViewRequest = {
       function: `${this.moduleAddress}::ai_trader::get_strategy_details`,
       type_arguments: [],
-      arguments: [owner, strategyId],
+      arguments: [account, strategyId.toString()],
     };
 
     return await this.client.view(payload);
