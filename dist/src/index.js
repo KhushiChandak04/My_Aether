@@ -94,17 +94,41 @@ class AetherAI {
     }
     async executeTrade(strategyId, action, amount, price) {
         try {
+            // Convert amount and price to Octas (1 APT = 100_000_000 Octas)
+            const amountInOctas = Math.floor(amount * 100000000);
+            const priceInOctas = Math.floor(price * 100000000);
+            // Validate inputs
+            if (amountInOctas <= 0) {
+                throw new Error('Trade amount must be greater than 0');
+            }
+            if (priceInOctas <= 0) {
+                throw new Error('Trade price must be greater than 0');
+            }
+            // Check wallet balance for buys
+            if (action.toUpperCase() === 'BUY') {
+                const balance = await this.getWalletBalance();
+                const totalCost = BigInt(amountInOctas) * BigInt(priceInOctas);
+                if (balance < totalCost) {
+                    throw new Error(`Insufficient balance. Required: ${totalCost.toString()} Octas, Available: ${balance.toString()} Octas`);
+                }
+            }
             const payload = {
                 type: "entry_function_payload",
                 function: `${this.moduleAddress}::ai_trader::execute_trade`,
                 type_arguments: ["0x1::aptos_coin::AptosCoin"],
                 arguments: [
                     strategyId,
-                    Array.from(Buffer.from(action)),
-                    amount,
-                    price
+                    Array.from(Buffer.from(action.toUpperCase())),
+                    amountInOctas.toString(),
+                    priceInOctas.toString()
                 ]
             };
+            console.log('Executing trade with payload:', {
+                strategyId,
+                action: action.toUpperCase(),
+                amount: amountInOctas.toString(),
+                price: priceInOctas.toString()
+            });
             const transaction = await this.wallet.submitTransaction(payload);
             console.log('Trade executed successfully!');
             console.log('Transaction hash:', transaction.hash);

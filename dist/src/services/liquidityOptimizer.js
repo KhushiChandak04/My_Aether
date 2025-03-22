@@ -92,5 +92,37 @@ class LiquidityOptimizer {
         }
         return transactions;
     }
+    async addLiquidity(amount) {
+        const params = {
+            tokenA: 'APT',
+            tokenB: 'USDC',
+            amountA: BigInt(amount),
+            amountB: BigInt(amount) // For simplicity, using 1:1 ratio
+        };
+        try {
+            return await this.protocolManager.executeProtocolAction('pancake', // Default to PancakeSwap for now
+            types_1.ProtocolAction.ADD_LIQUIDITY, params);
+        }
+        catch (error) {
+            console.error('Failed to add liquidity:', error);
+            throw error;
+        }
+    }
+    async removeLiquidity(amount) {
+        const params = {
+            tokenA: 'APT',
+            tokenB: 'USDC',
+            amountA: BigInt(amount),
+            amountB: BigInt(amount) // For simplicity, using 1:1 ratio
+        };
+        try {
+            return await this.protocolManager.executeProtocolAction('pancake', // Default to PancakeSwap for now
+            types_1.ProtocolAction.REMOVE_LIQUIDITY, params);
+        }
+        catch (error) {
+            console.error('Failed to remove liquidity:', error);
+            throw error;
+        }
+    }
 }
 exports.LiquidityOptimizer = LiquidityOptimizer;

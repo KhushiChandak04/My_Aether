@@ -33,6 +33,23 @@ router.get('/', async (_req, res) => {
   }
 });
 
+// Get trade history
+router.get('/history', async (req, res) => {
+  try {
+    const { db } = await connectToDatabase();
+    const trades = await db
+      .collection('trades')
+      .find({})
+      .sort({ timestamp: -1 })
+      .toArray();
+    
+    res.status(200).json({ success: true, data: trades });
+  } catch (error) {
+    console.error('Error fetching trade history:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch trade history' });
+  }
+});
+
 // Record a new trade
 router.post('/', express.json(), async (req, res) => {
   try {

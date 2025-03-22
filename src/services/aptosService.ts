@@ -1,11 +1,18 @@
 import { AptosClient, Types } from "aptos";
 
+// Default values if env vars are not set
+const DEFAULT_MODULE_ADDRESS = "0x23306993ed0d0feb8ef9d97cd6853cf54b21ac058a5c2fddda801020cb7c5789";
+const DEFAULT_NODE_URL = "https://fullnode.devnet.aptoslabs.com/v1";
+
 export class AptosService {
   private client: AptosClient;
-  private moduleAddress = "0xa08d5a46e1222477997445f50d64f52fae183f16bfa1d0b95e0d135bc8d15c46";
+  private moduleAddress: string;
 
   constructor() {
-    this.client = new AptosClient("https://fullnode.devnet.aptoslabs.com");
+    // Use environment variables with fallbacks
+    this.moduleAddress = import.meta.env.VITE_MODULE_ADDRESS || DEFAULT_MODULE_ADDRESS;
+    const nodeUrl = import.meta.env.VITE_APTOS_NODE_URL || DEFAULT_NODE_URL;
+    this.client = new AptosClient(nodeUrl);
   }
 
   async registerStrategy(

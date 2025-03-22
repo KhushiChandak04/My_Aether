@@ -1,16 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 export default defineConfig({
   plugins: [react()],
   root: resolve(__dirname, 'src/web'),
   publicDir: resolve(__dirname, 'src/web/public'),
   server: {
-    port: 4000,
+    port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:4000',
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
@@ -30,7 +34,7 @@ export default defineConfig({
         }
       },
       '/ws': {
-        target: 'ws://localhost:3000',
+        target: 'ws://localhost:4000',
         ws: true,
         changeOrigin: true
       },
@@ -45,4 +49,8 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  define: {
+    'process.env.MODULE_ADDRESS': JSON.stringify(process.env.MODULE_ADDRESS),
+    'process.env.APTOS_NODE_URL': JSON.stringify(process.env.APTOS_NODE_URL)
+  }
 });

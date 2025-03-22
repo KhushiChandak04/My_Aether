@@ -22,48 +22,32 @@ export interface HistoricalData {
 }
 
 class MarketService {
-    private readonly API_BASE_URL = 'https://api.coingecko.com/api/v3';
+    private readonly API_BASE_URL = 'http://localhost:4000/api';
 
-    async getTopCryptos(limit: number = 100): Promise<CryptoData[]> {
+    async getTopCryptos(): Promise<CryptoData[]> {
         try {
-            const response = await axios.get(`${this.API_BASE_URL}/coins/markets`, {
-                params: {
-                    vs_currency: 'usd',
-                    order: 'market_cap_desc',
-                    per_page: limit,
-                    page: 1,
-                    sparkline: true,
-                    price_change_percentage: '24h'
-                }
-            });
+            const response = await axios.get(`${this.API_BASE_URL}/market/crypto`);
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching crypto data:', error);
             return [];
         }
     }
 
     async getCryptoDetails(id: string): Promise<any> {
-        try {
-            const response = await axios.get(`${this.API_BASE_URL}/coins/${id}`);
+        return this.retryWithDelay(async () => {
+            const response = await axios.get(`${this.API_BASE_URL}/market/crypto/${id}`);
             return response.data;
-        } catch (error) {
-            console.error('Error fetching crypto details:', error);
-            return null;
-        }
+        });
     }
 
     async getHistoricalData(id: string, days: number = 7): Promise<HistoricalData | null> {
         try {
-            const response = await axios.get(`${this.API_BASE_URL}/coins/${id}/market_chart`, {
-                params: {
-                    vs_currency: 'usd',
-                    days: days,
-                    interval: days <= 1 ? 'minute' : 'daily'
-                }
+            const response = await axios.get(`${this.API_BASE_URL}/market/crypto/${id}/history`, {
+                params: { days }
             });
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching historical data:', error);
             return null;
         }
@@ -71,11 +55,37 @@ class MarketService {
 
     async getMarketStats(): Promise<any> {
         try {
-            const response = await axios.get(`${this.API_BASE_URL}/global`);
+            const response = await axios.get(`${this.API_BASE_URL}/market/stats`);
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching market stats:', error);
             return null;
+        }
+    }
+
+    // Add retry logic and rate limit handling
+    private async retryWithDelay<T>(
+        operation: () => Promise<T>,
+        retries: number = 3,
+        delay: number = 1000
+    ): Promise<T> {
+        try {
+            return await operation();
+        } catch (error: any) {
+            if (retries === 0 || !axios.isAxiosError(error)) {
+                throw error;
+            }
+
+            // Handle rate limiting specifically
+            if (error.response?.status === 429) {
+                const waitTime = parseInt(error.response.headers['retry-after']) * 1000 || delay;
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                return this.retryWithDelay(operation, retries - 1, delay * 2);
+            }
+
+            // Handle other errors with exponential backoff
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return this.retryWithDelay(operation, retries - 1, delay * 2);
         }
     }
 }

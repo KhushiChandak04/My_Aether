@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "dev:frontend": "vite",
-    "dev:backend": "ts-node src/server.ts",
+    "dev:backend": "ts-node -P tsconfig.server.json src/server.ts",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build:frontend": "vite build",
     "preview": "vite preview"
@@ -38,6 +38,7 @@
     "express": "^4.18.2",
     "mongo": "^0.1.0",
     "mongodb": "^5.9.2",
+    "node-cache": "^5.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.3.0",
