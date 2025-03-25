@@ -8,6 +8,7 @@ dotenv.config();
 
 export default defineConfig({
   plugins: [react()],
+  base: '/My_Aether/',
   root: resolve(__dirname, 'src/web'),
   publicDir: resolve(__dirname, 'src/web/public'),
   server: {
@@ -41,7 +42,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: resolve(__dirname, 'dist/web'),
+    outDir: 'build',
     emptyOutDir: true,
   },
   resolve: {

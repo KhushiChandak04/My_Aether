@@ -2,6 +2,7 @@
   "name": "aether-ai",
   "version": "1.0.0",
   "description": "AI-driven trading system on Aptos blockchain",
+  "homepage": "https://devpatel976.github.io/My_Aether",
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
