@@ -1,3 +1,7 @@
+#Video Recording 
+
+https://github.com/user-attachments/assets/36b1f12c-a375-495a-b501-261f99f6c867
+
 # AetherAI - AI-Driven Trading on Aptos Blockchain
 
 This project implements a smart contract system for AI-driven trading on the Aptos blockchain, allowing AI models to execute transactions and store trading strategies on-chain.
