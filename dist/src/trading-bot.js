@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AITradingBot = void 0;
-const events_1 = require("events");
-const index_1 = require("./index");
-class AITradingBot extends events_1.EventEmitter {
+import { EventEmitter } from "events";
+import { AetherAI } from "./index";
+export class AITradingBot extends EventEmitter {
     constructor(nodeUrl, strategyId, options = {
         minConfidence: 0.7, // Lower confidence threshold
         checkInterval: 5000, // Check every 5 seconds
@@ -11,7 +8,7 @@ class AITradingBot extends events_1.EventEmitter {
         super();
         this._isRunning = false;
         this.lastCheck = 0;
-        this.ai = new index_1.AetherAI(nodeUrl);
+        this.ai = new AetherAI(nodeUrl);
         this.strategyId = strategyId;
         this.minConfidence = options.minConfidence;
         this.checkInterval = options.checkInterval;
@@ -182,4 +179,3 @@ class AITradingBot extends events_1.EventEmitter {
         };
     }
 }
-exports.AITradingBot = AITradingBot;

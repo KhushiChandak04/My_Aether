@@ -1,49 +1,13 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AIWallet = void 0;
-const aptos_1 = require("aptos");
-const fs = __importStar(require("fs"));
-const path = __importStar(require("path"));
-const manager_1 = require("./protocols/manager");
-class AIWallet {
+import { AptosAccount, AptosClient, CoinClient, FaucetClient, HexString } from "aptos";
+import * as fs from 'fs';
+import * as path from 'path';
+import { ProtocolManager } from "./protocols/manager";
+export class AIWallet {
     constructor(nodeUrl, walletDir = '.wallets') {
-        this.client = new aptos_1.AptosClient(nodeUrl);
-        this.coinClient = new aptos_1.CoinClient(this.client);
+        this.client = new AptosClient(nodeUrl);
+        this.coinClient = new CoinClient(this.client);
         this.walletPath = path.join(process.cwd(), walletDir);
-        this.protocolManager = new manager_1.ProtocolManager(this);
+        this.protocolManager = new ProtocolManager(this);
         // Ensure wallet directory exists
         if (!fs.existsSync(this.walletPath)) {
             fs.mkdirSync(this.walletPath, { recursive: true });
@@ -56,11 +20,11 @@ class AIWallet {
         try {
             console.log('Generating new account...');
             // Generate new account
-            const account = new aptos_1.AptosAccount();
+            const account = new AptosAccount();
             // Save wallet info
             const walletInfo = {
                 address: account.address().hex(),
-                privateKey: aptos_1.HexString.fromUint8Array(account.signingKey.secretKey).hex(),
+                privateKey: HexString.fromUint8Array(account.signingKey.secretKey).hex(),
                 publicKey: account.pubKey().hex(),
                 label,
                 createdAt: new Date().toISOString()
@@ -71,7 +35,7 @@ class AIWallet {
             // Fund account on devnet
             if (process.env.NODE_ENV !== 'production') {
                 console.log('Funding account on devnet...');
-                const faucetClient = new aptos_1.FaucetClient(this.client.nodeUrl, 'https://faucet.devnet.aptoslabs.com');
+                const faucetClient = new FaucetClient(this.client.nodeUrl, 'https://faucet.devnet.aptoslabs.com');
                 await faucetClient.fundAccount(account.address(), 100000000);
                 console.log('Account funded successfully');
             }
@@ -102,7 +66,7 @@ class AIWallet {
                 throw new Error('Invalid wallet data');
             }
             console.log('Creating account from private key...');
-            this.account = new aptos_1.AptosAccount(aptos_1.HexString.ensure(walletInfo.privateKey).toUint8Array());
+            this.account = new AptosAccount(HexString.ensure(walletInfo.privateKey).toUint8Array());
             // Verify the address matches
             const loadedAddress = this.account.address().hex();
             if (loadedAddress !== walletInfo.address) {
@@ -228,4 +192,3 @@ class AIWallet {
         return fs.existsSync(filename);
     }
 }
-exports.AIWallet = AIWallet;

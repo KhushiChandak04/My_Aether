@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.walletService = void 0;
 class WalletService {
     constructor() {
         this.connected = false;
@@ -63,4 +60,4 @@ class WalletService {
         return this.connected;
     }
 }
-exports.walletService = new WalletService();
+export const walletService = new WalletService();

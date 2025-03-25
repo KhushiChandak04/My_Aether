@@ -1,13 +1,7 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Web3Provider = exports.useWeb3 = void 0;
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
-const web3_1 = __importDefault(require("web3"));
-const Web3Context = (0, react_1.createContext)({
+import { jsx as _jsx } from "react/jsx-runtime";
+import { createContext, useContext, useState, useEffect } from 'react';
+import Web3 from 'web3';
+const Web3Context = createContext({
     web3: null,
     account: null,
     chainId: null,
@@ -17,17 +11,16 @@ const Web3Context = (0, react_1.createContext)({
     error: null,
     isMetaMaskInstalled: false,
 });
-const useWeb3 = () => (0, react_1.useContext)(Web3Context);
-exports.useWeb3 = useWeb3;
-const Web3Provider = ({ children }) => {
-    const [web3, setWeb3] = (0, react_1.useState)(null);
-    const [account, setAccount] = (0, react_1.useState)(null);
-    const [chainId, setChainId] = (0, react_1.useState)(null);
-    const [isConnecting, setIsConnecting] = (0, react_1.useState)(false);
-    const [error, setError] = (0, react_1.useState)(null);
-    const [isMetaMaskInstalled, setIsMetaMaskInstalled] = (0, react_1.useState)(false);
+export const useWeb3 = () => useContext(Web3Context);
+export const Web3Provider = ({ children }) => {
+    const [web3, setWeb3] = useState(null);
+    const [account, setAccount] = useState(null);
+    const [chainId, setChainId] = useState(null);
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [error, setError] = useState(null);
+    const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
     // Check if MetaMask is installed
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const checkMetaMask = () => {
             const isInstalled = typeof window !== 'undefined' &&
                 !!window.ethereum &&
@@ -42,7 +35,7 @@ const Web3Provider = ({ children }) => {
         checkMetaMask();
     }, []);
     // Initialize Web3 and check for existing connection
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const initWeb3 = async () => {
             if (!window.ethereum?.isMetaMask) {
                 console.log('MetaMask not found during initialization');
@@ -52,7 +45,7 @@ const Web3Provider = ({ children }) => {
             try {
                 console.log('Initializing Web3...');
                 const provider = window.ethereum;
-                const web3Instance = new web3_1.default(provider);
+                const web3Instance = new Web3(provider);
                 setWeb3(web3Instance);
                 // Check if already connected
                 const accounts = await provider.request({
@@ -78,7 +71,7 @@ const Web3Provider = ({ children }) => {
         initWeb3();
     }, []);
     // Setup event listeners
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const provider = window.ethereum;
         if (!provider?.isMetaMask) {
             console.log('MetaMask not found during event setup');
@@ -142,7 +135,7 @@ const Web3Provider = ({ children }) => {
             setChainId(parseInt(chainId, 16));
             // Initialize Web3 instance if not already done
             if (!web3) {
-                const web3Instance = new web3_1.default(provider);
+                const web3Instance = new Web3(provider);
                 setWeb3(web3Instance);
             }
         }
@@ -170,7 +163,7 @@ const Web3Provider = ({ children }) => {
         setChainId(null);
         setError(null);
     };
-    return ((0, jsx_runtime_1.jsx)(Web3Context.Provider, { value: {
+    return (_jsx(Web3Context.Provider, { value: {
             web3,
             account,
             chainId,
@@ -181,4 +174,3 @@ const Web3Provider = ({ children }) => {
             isMetaMaskInstalled,
         }, children: children }));
 };
-exports.Web3Provider = Web3Provider;

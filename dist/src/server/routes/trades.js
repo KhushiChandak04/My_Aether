@@ -1,15 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const mongodb_1 = require("../../lib/mongodb");
-const router = express_1.default.Router();
+import express from 'express';
+import { connectToDatabase } from '../../lib/mongodb';
+const router = express.Router();
 // Get all trades
 router.get('/', async (_req, res) => {
     try {
-        const { db } = await (0, mongodb_1.connectToDatabase)();
+        const { db } = await connectToDatabase();
         const trades = await db
             .collection('trades')
             .find({})
@@ -22,8 +17,24 @@ router.get('/', async (_req, res) => {
         res.status(500).json({ success: false, error: 'Failed to fetch trades' });
     }
 });
+// Get trade history
+router.get('/history', async (req, res) => {
+    try {
+        const { db } = await connectToDatabase();
+        const trades = await db
+            .collection('trades')
+            .find({})
+            .sort({ timestamp: -1 })
+            .toArray();
+        res.status(200).json({ success: true, data: trades });
+    }
+    catch (error) {
+        console.error('Error fetching trade history:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch trade history' });
+    }
+});
 // Record a new trade
-router.post('/', express_1.default.json(), async (req, res) => {
+router.post('/', express.json(), async (req, res) => {
     try {
         const trade = req.body;
         // Validate required fields
@@ -35,7 +46,7 @@ router.post('/', express_1.default.json(), async (req, res) => {
         }
         // Ensure timestamp is a Date object
         trade.timestamp = trade.timestamp ? new Date(trade.timestamp) : new Date();
-        const { db } = await (0, mongodb_1.connectToDatabase)();
+        const { db } = await connectToDatabase();
         await db.collection('trades').insertOne(trade);
         res.status(200).json({ success: true, data: trade });
     }
@@ -44,4 +55,4 @@ router.post('/', express_1.default.json(), async (req, res) => {
         res.status(500).json({ success: false, error: 'Failed to record trade' });
     }
 });
-exports.default = router;
+export default router;

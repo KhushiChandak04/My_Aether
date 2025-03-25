@@ -1,20 +1,17 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.LiquidswapProtocol = void 0;
-const types_1 = require("./types");
-class LiquidswapProtocol {
+import { ProtocolType, ProtocolAction } from "./types";
+export class LiquidswapProtocol {
     constructor() {
         this.name = "Liquidswap";
         this.address = "0x190d44266241744264b964a37b8f09863167a12d3e70cda39376cfb4e3561e12";
-        this.type = types_1.ProtocolType.DEX;
+        this.type = ProtocolType.DEX;
     }
     async getPayload(action, params) {
         switch (action) {
-            case types_1.ProtocolAction.SWAP:
+            case ProtocolAction.SWAP:
                 return this.getSwapPayload(params);
-            case types_1.ProtocolAction.ADD_LIQUIDITY:
+            case ProtocolAction.ADD_LIQUIDITY:
                 return this.getAddLiquidityPayload(params);
-            case types_1.ProtocolAction.REMOVE_LIQUIDITY:
+            case ProtocolAction.REMOVE_LIQUIDITY:
                 return this.getRemoveLiquidityPayload(params);
             default:
                 throw new Error(`Action ${action} not supported for ${this.name}`);
@@ -52,4 +49,3 @@ class LiquidswapProtocol {
         };
     }
 }
-exports.LiquidswapProtocol = LiquidswapProtocol;

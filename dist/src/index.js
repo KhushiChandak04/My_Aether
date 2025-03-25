@@ -1,12 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AetherAI = void 0;
-const aptos_1 = require("aptos");
-const wallet_1 = require("./wallet");
-class AetherAI {
+import { AptosClient, FaucetClient } from "aptos";
+import { AIWallet } from './wallet';
+export class AetherAI {
     constructor(nodeUrl) {
-        this.client = new aptos_1.AptosClient(nodeUrl);
-        this.wallet = new wallet_1.AIWallet(nodeUrl);
+        this.client = new AptosClient(nodeUrl);
+        this.wallet = new AIWallet(nodeUrl);
         this.moduleAddress = '0x23306993ed0d0feb8ef9d97cd6853cf54b21ac058a5c2fddda801020cb7c5789';
     }
     /**
@@ -43,7 +40,7 @@ class AetherAI {
         if (!this.wallet) {
             throw new Error('No wallet instance available');
         }
-        const faucetClient = new aptos_1.FaucetClient(this.client.nodeUrl, 'https://faucet.devnet.aptoslabs.com');
+        const faucetClient = new FaucetClient(this.client.nodeUrl, 'https://faucet.devnet.aptoslabs.com');
         const address = await this.getWalletAddress();
         await faucetClient.fundAccount(address, 100000000);
     }
@@ -163,4 +160,3 @@ class AetherAI {
         }
     }
 }
-exports.AetherAI = AetherAI;

@@ -1,15 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const wallet_1 = require("../../wallet");
-const types_1 = require("../../protocols/types");
-const router = express_1.default.Router();
+import express from 'express';
+import { AIWallet } from '../../wallet';
+import { ProtocolAction, ProtocolType } from '../../protocols/types';
+const router = express.Router();
 const NODE_URL = process.env.APTOS_NODE_URL || 'https://fullnode.devnet.aptoslabs.com';
 // Initialize wallet
-const wallet = new wallet_1.AIWallet(NODE_URL);
+const wallet = new AIWallet(NODE_URL);
 router.post('/execute', async (req, res) => {
     try {
         const { action, params } = req.body;
@@ -24,14 +19,14 @@ router.post('/execute', async (req, res) => {
         await wallet.load('ai_trader');
         let result;
         switch (action) {
-            case types_1.ProtocolAction.SWAP: {
+            case ProtocolAction.SWAP: {
                 const route = await wallet.protocolManager.getOptimalSwapRoute(params.tokenIn, params.tokenOut, BigInt(params.amountIn));
-                result = await wallet.protocolManager.executeProtocolAction(route.protocol, types_1.ProtocolAction.SWAP, route.params);
+                result = await wallet.protocolManager.executeProtocolAction(route.protocol, ProtocolAction.SWAP, route.params);
                 break;
             }
-            case types_1.ProtocolAction.SUPPLY:
-            case types_1.ProtocolAction.BORROW:
-            case types_1.ProtocolAction.REPAY: {
+            case ProtocolAction.SUPPLY:
+            case ProtocolAction.BORROW:
+            case ProtocolAction.REPAY: {
                 const protocol = await wallet.protocolManager.getOptimalLendingProtocol(params.token, BigInt(params.amount));
                 result = await wallet.protocolManager.executeProtocolAction(protocol.protocol, action, protocol.params);
                 break;
@@ -58,8 +53,8 @@ router.post('/execute', async (req, res) => {
 router.get('/protocols', async (_req, res) => {
     try {
         // Get available protocols
-        const dexes = wallet.protocolManager.getProtocolsByType(types_1.ProtocolType.DEX);
-        const lendingProtocols = wallet.protocolManager.getProtocolsByType(types_1.ProtocolType.LENDING);
+        const dexes = wallet.protocolManager.getProtocolsByType(ProtocolType.DEX);
+        const lendingProtocols = wallet.protocolManager.getProtocolsByType(ProtocolType.LENDING);
         res.json({
             success: true,
             protocols: {
@@ -76,4 +71,4 @@ router.get('/protocols', async (_req, res) => {
         });
     }
 });
-exports.default = router;
+export default router;

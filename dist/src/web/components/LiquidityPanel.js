@@ -1,19 +1,14 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
-const material_1 = require("@mui/material");
-const Add_1 = __importDefault(require("@mui/icons-material/Add"));
-const Remove_1 = __importDefault(require("@mui/icons-material/Remove"));
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from 'react';
+import { Paper, Typography, TextField, Button, CircularProgress, Grid, Box, Divider } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 const LiquidityPanel = ({ connected }) => {
-    const [loading, setLoading] = (0, react_1.useState)(false);
-    const [balance, setBalance] = (0, react_1.useState)('0');
-    const [addAmount, setAddAmount] = (0, react_1.useState)('');
-    const [removeAmount, setRemoveAmount] = (0, react_1.useState)('');
-    (0, react_1.useEffect)(() => {
+    const [loading, setLoading] = useState(false);
+    const [balance, setBalance] = useState('0');
+    const [addAmount, setAddAmount] = useState('');
+    const [removeAmount, setRemoveAmount] = useState('');
+    useEffect(() => {
         if (connected) {
             fetchBalance();
         }
@@ -71,8 +66,8 @@ const LiquidityPanel = ({ connected }) => {
         }
     };
     if (!connected) {
-        return ((0, jsx_runtime_1.jsx)(material_1.Paper, { sx: { p: 3, mt: 2 }, children: (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body1", color: "textSecondary", children: "Please connect your wallet to manage liquidity" }) }));
+        return (_jsx(Paper, { sx: { p: 3, mt: 2 }, children: _jsx(Typography, { variant: "body1", color: "textSecondary", children: "Please connect your wallet to manage liquidity" }) }));
     }
-    return ((0, jsx_runtime_1.jsxs)(material_1.Paper, { sx: { p: 3, mt: 2 }, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h6", gutterBottom: true, children: "Liquidity Management" }), (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { mb: 3 }, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body1", color: "textSecondary", gutterBottom: true, children: "Current Balance" }), (0, jsx_runtime_1.jsxs)(material_1.Typography, { variant: "h5", children: [balance, " APT"] })] }), (0, jsx_runtime_1.jsx)(material_1.Divider, { sx: { my: 2 } }), (0, jsx_runtime_1.jsxs)(material_1.Grid, { container: true, spacing: 3, children: [(0, jsx_runtime_1.jsxs)(material_1.Grid, { item: true, xs: 12, md: 6, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "subtitle1", gutterBottom: true, children: "Add Liquidity" }), (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: 'flex', gap: 1 }, children: [(0, jsx_runtime_1.jsx)(material_1.TextField, { size: "small", type: "number", value: addAmount, onChange: (e) => setAddAmount(e.target.value), placeholder: "Amount in APT", disabled: loading, fullWidth: true }), (0, jsx_runtime_1.jsx)(material_1.Button, { variant: "contained", color: "primary", onClick: handleAddLiquidity, disabled: loading || !addAmount, startIcon: loading ? (0, jsx_runtime_1.jsx)(material_1.CircularProgress, { size: 20 }) : (0, jsx_runtime_1.jsx)(Add_1.default, {}), children: "Add" })] })] }), (0, jsx_runtime_1.jsxs)(material_1.Grid, { item: true, xs: 12, md: 6, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "subtitle1", gutterBottom: true, children: "Remove Liquidity" }), (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: 'flex', gap: 1 }, children: [(0, jsx_runtime_1.jsx)(material_1.TextField, { size: "small", type: "number", value: removeAmount, onChange: (e) => setRemoveAmount(e.target.value), placeholder: "Amount in APT", disabled: loading, fullWidth: true }), (0, jsx_runtime_1.jsx)(material_1.Button, { variant: "contained", color: "error", onClick: handleRemoveLiquidity, disabled: loading || !removeAmount, startIcon: loading ? (0, jsx_runtime_1.jsx)(material_1.CircularProgress, { size: 20 }) : (0, jsx_runtime_1.jsx)(Remove_1.default, {}), children: "Remove" })] })] })] })] }));
+    return (_jsxs(Paper, { sx: { p: 3, mt: 2 }, children: [_jsx(Typography, { variant: "h6", gutterBottom: true, children: "Liquidity Management" }), _jsxs(Box, { sx: { mb: 3 }, children: [_jsx(Typography, { variant: "body1", color: "textSecondary", gutterBottom: true, children: "Current Balance" }), _jsxs(Typography, { variant: "h5", children: [balance, " APT"] })] }), _jsx(Divider, { sx: { my: 2 } }), _jsxs(Grid, { container: true, spacing: 3, children: [_jsxs(Grid, { item: true, xs: 12, md: 6, children: [_jsx(Typography, { variant: "subtitle1", gutterBottom: true, children: "Add Liquidity" }), _jsxs(Box, { sx: { display: 'flex', gap: 1 }, children: [_jsx(TextField, { size: "small", type: "number", value: addAmount, onChange: (e) => setAddAmount(e.target.value), placeholder: "Amount in APT", disabled: loading, fullWidth: true }), _jsx(Button, { variant: "contained", color: "primary", onClick: handleAddLiquidity, disabled: loading || !addAmount, startIcon: loading ? _jsx(CircularProgress, { size: 20 }) : _jsx(AddIcon, {}), children: "Add" })] })] }), _jsxs(Grid, { item: true, xs: 12, md: 6, children: [_jsx(Typography, { variant: "subtitle1", gutterBottom: true, children: "Remove Liquidity" }), _jsxs(Box, { sx: { display: 'flex', gap: 1 }, children: [_jsx(TextField, { size: "small", type: "number", value: removeAmount, onChange: (e) => setRemoveAmount(e.target.value), placeholder: "Amount in APT", disabled: loading, fullWidth: true }), _jsx(Button, { variant: "contained", color: "error", onClick: handleRemoveLiquidity, disabled: loading || !removeAmount, startIcon: loading ? _jsx(CircularProgress, { size: 20 }) : _jsx(RemoveIcon, {}), children: "Remove" })] })] })] })] }));
 };
-exports.default = LiquidityPanel;
+export default LiquidityPanel;

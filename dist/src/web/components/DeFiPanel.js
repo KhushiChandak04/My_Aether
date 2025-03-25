@@ -1,14 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
-const types_1 = require("../../protocols/types");
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { useState } from 'react';
+import { ProtocolAction } from '../../protocols/types';
 const DeFiPanel = ({ isConnected }) => {
-    const [amount, setAmount] = (0, react_1.useState)('');
-    const [tokenIn, setTokenIn] = (0, react_1.useState)('APT');
-    const [tokenOut, setTokenOut] = (0, react_1.useState)('USDC');
-    const [action, setAction] = (0, react_1.useState)(types_1.ProtocolAction.SWAP);
-    const [status, setStatus] = (0, react_1.useState)('');
+    const [amount, setAmount] = useState('');
+    const [tokenIn, setTokenIn] = useState('APT');
+    const [tokenOut, setTokenOut] = useState('USDC');
+    const [action, setAction] = useState(ProtocolAction.SWAP);
+    const [status, setStatus] = useState('');
     const executeAction = async () => {
         if (!isConnected) {
             setStatus('Please connect your wallet first');
@@ -42,6 +40,6 @@ const DeFiPanel = ({ isConnected }) => {
             setStatus('Failed to execute DeFi action');
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "defi-panel", children: [(0, jsx_runtime_1.jsx)("h2", { children: "DeFi Operations" }), (0, jsx_runtime_1.jsxs)("div", { className: "defi-controls", children: [(0, jsx_runtime_1.jsxs)("div", { className: "input-group", children: [(0, jsx_runtime_1.jsx)("label", { children: "Action:" }), (0, jsx_runtime_1.jsxs)("select", { value: action, onChange: (e) => setAction(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: types_1.ProtocolAction.SWAP, children: "Swap" }), (0, jsx_runtime_1.jsx)("option", { value: types_1.ProtocolAction.SUPPLY, children: "Supply" }), (0, jsx_runtime_1.jsx)("option", { value: types_1.ProtocolAction.BORROW, children: "Borrow" }), (0, jsx_runtime_1.jsx)("option", { value: types_1.ProtocolAction.REPAY, children: "Repay" })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "input-group", children: [(0, jsx_runtime_1.jsx)("label", { children: "Amount:" }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: amount, onChange: (e) => setAmount(e.target.value), placeholder: "Enter amount", min: "0", step: "0.1" })] }), action === types_1.ProtocolAction.SWAP && ((0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsxs)("div", { className: "input-group", children: [(0, jsx_runtime_1.jsx)("label", { children: "Token In:" }), (0, jsx_runtime_1.jsxs)("select", { value: tokenIn, onChange: (e) => setTokenIn(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "APT", children: "APT" }), (0, jsx_runtime_1.jsx)("option", { value: "USDC", children: "USDC" }), (0, jsx_runtime_1.jsx)("option", { value: "USDT", children: "USDT" })] })] }), (0, jsx_runtime_1.jsxs)("div", { className: "input-group", children: [(0, jsx_runtime_1.jsx)("label", { children: "Token Out:" }), (0, jsx_runtime_1.jsxs)("select", { value: tokenOut, onChange: (e) => setTokenOut(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "USDC", children: "USDC" }), (0, jsx_runtime_1.jsx)("option", { value: "APT", children: "APT" }), (0, jsx_runtime_1.jsx)("option", { value: "USDT", children: "USDT" })] })] })] })), (0, jsx_runtime_1.jsx)("button", { onClick: executeAction, className: "primary-button", disabled: !isConnected || !amount, children: "Execute" }), status && ((0, jsx_runtime_1.jsx)("div", { className: `status-message ${status.includes('Error') ? 'error' : 'success'}`, children: status }))] })] }));
+    return (_jsxs("div", { className: "defi-panel", children: [_jsx("h2", { children: "DeFi Operations" }), _jsxs("div", { className: "defi-controls", children: [_jsxs("div", { className: "input-group", children: [_jsx("label", { children: "Action:" }), _jsxs("select", { value: action, onChange: (e) => setAction(e.target.value), children: [_jsx("option", { value: ProtocolAction.SWAP, children: "Swap" }), _jsx("option", { value: ProtocolAction.SUPPLY, children: "Supply" }), _jsx("option", { value: ProtocolAction.BORROW, children: "Borrow" }), _jsx("option", { value: ProtocolAction.REPAY, children: "Repay" })] })] }), _jsxs("div", { className: "input-group", children: [_jsx("label", { children: "Amount:" }), _jsx("input", { type: "number", value: amount, onChange: (e) => setAmount(e.target.value), placeholder: "Enter amount", min: "0", step: "0.1" })] }), action === ProtocolAction.SWAP && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "input-group", children: [_jsx("label", { children: "Token In:" }), _jsxs("select", { value: tokenIn, onChange: (e) => setTokenIn(e.target.value), children: [_jsx("option", { value: "APT", children: "APT" }), _jsx("option", { value: "USDC", children: "USDC" }), _jsx("option", { value: "USDT", children: "USDT" })] })] }), _jsxs("div", { className: "input-group", children: [_jsx("label", { children: "Token Out:" }), _jsxs("select", { value: tokenOut, onChange: (e) => setTokenOut(e.target.value), children: [_jsx("option", { value: "USDC", children: "USDC" }), _jsx("option", { value: "APT", children: "APT" }), _jsx("option", { value: "USDT", children: "USDT" })] })] })] })), _jsx("button", { onClick: executeAction, className: "primary-button", disabled: !isConnected || !amount, children: "Execute" }), status && (_jsx("div", { className: `status-message ${status.includes('Error') ? 'error' : 'success'}`, children: status }))] })] }));
 };
-exports.default = DeFiPanel;
+export default DeFiPanel;

@@ -1,20 +1,17 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AptinProtocol = void 0;
-const types_1 = require("./types");
-class AptinProtocol {
+import { ProtocolType, ProtocolAction } from "./types";
+export class AptinProtocol {
     constructor() {
         this.name = "Aptin";
         this.address = "0x38d39a13a4c03d58a6e16d48e22a14e8e6817e5c2329853c2f047a2c36486fea";
-        this.type = types_1.ProtocolType.LENDING;
+        this.type = ProtocolType.LENDING;
     }
     async getPayload(action, params) {
         switch (action) {
-            case types_1.ProtocolAction.SUPPLY:
+            case ProtocolAction.SUPPLY:
                 return this.getSupplyPayload(params);
-            case types_1.ProtocolAction.BORROW:
+            case ProtocolAction.BORROW:
                 return this.getBorrowPayload(params);
-            case types_1.ProtocolAction.REPAY:
+            case ProtocolAction.REPAY:
                 return this.getRepayPayload(params);
             default:
                 throw new Error(`Action ${action} not supported for ${this.name}`);
@@ -45,4 +42,3 @@ class AptinProtocol {
         };
     }
 }
-exports.AptinProtocol = AptinProtocol;

@@ -1,41 +1,6 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-const trading_bot_1 = require("./trading-bot");
-const index_1 = require("./index");
-const dotenv = __importStar(require("dotenv"));
+import { AITradingBot } from './trading-bot';
+import { AetherAI } from './index';
+import * as dotenv from 'dotenv';
 dotenv.config();
 async function testTradingSystem() {
     if (!process.env.APTOS_NODE_URL) {
@@ -46,7 +11,7 @@ async function testTradingSystem() {
     try {
         // 1. Initialize AetherAI and create wallet
         console.log('Step 1: Initializing AetherAI...');
-        const ai = new index_1.AetherAI(process.env.APTOS_NODE_URL);
+        const ai = new AetherAI(process.env.APTOS_NODE_URL);
         const walletAddress = await ai.initializeWallet('test_wallet');
         console.log('✅ Wallet initialized:', walletAddress);
         // 2. Register a test trading strategy
@@ -61,7 +26,7 @@ async function testTradingSystem() {
         console.log('✅ Strategy registered:', `https://explorer.aptoslabs.com/txn/${strategyTxn.hash}?network=devnet`);
         // 3. Initialize trading bot with test settings
         console.log('\nStep 3: Initializing trading bot...');
-        const bot = new trading_bot_1.AITradingBot(process.env.APTOS_NODE_URL, Date.now(), {
+        const bot = new AITradingBot(process.env.APTOS_NODE_URL, Date.now(), {
             minConfidence: 0.6, // Lower threshold for testing
             checkInterval: 10000 // Check every 10 seconds for testing
         });

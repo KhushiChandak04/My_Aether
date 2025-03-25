@@ -1,22 +1,17 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
-const mongodb_1 = require("./lib/mongodb");
-const market_1 = __importDefault(require("./server/routes/market"));
-const trades_1 = __importDefault(require("./server/routes/trades"));
-const app = (0, express_1.default)();
-const port = process.env.PORT || 3000;
+import express from 'express';
+import cors from 'cors';
+import { connectToDatabase } from './lib/mongodb';
+import marketRoutes from './server/routes/market';
+import tradeRoutes from './server/routes/trades';
+const app = express();
+const port = process.env.PORT || 4000;
 // Middleware
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
+app.use(cors());
+app.use(express.json());
 // Initialize database and create collections if needed
 async function initializeDatabase() {
     try {
-        const { db } = await (0, mongodb_1.connectToDatabase)();
+        const { db } = await connectToDatabase();
         const collections = await db.listCollections().toArray();
         const collectionNames = collections.map(c => c.name);
         const requiredCollections = [
@@ -66,8 +61,8 @@ async function initializeDatabase() {
 // Health check endpoint
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 // Routes
-app.use('/api/market', market_1.default);
-app.use('/api/trades', trades_1.default);
+app.use('/api/market', marketRoutes);
+app.use('/api/trades', tradeRoutes);
 // Error handling middleware
 app.use((err, _req, res, _next) => {
     console.error('Server error:', err);
@@ -112,4 +107,4 @@ process.on('unhandledRejection', (error) => {
     process.exit(1);
 });
 startServer();
-exports.default = app;
+export default app;

@@ -1,17 +1,15 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState } from 'react';
 const LiquidityOptimizer = () => {
-    const [availableTokens, setAvailableTokens] = (0, react_1.useState)([
+    const [availableTokens, setAvailableTokens] = useState([
         { token: 'APT', amount: '' },
         { token: 'USDC', amount: '' },
         { token: 'USDT', amount: '' }
     ]);
-    const [riskTolerance, setRiskTolerance] = (0, react_1.useState)(0.5);
-    const [optimizationResults, setOptimizationResults] = (0, react_1.useState)([]);
-    const [isOptimizing, setIsOptimizing] = (0, react_1.useState)(false);
-    const [status, setStatus] = (0, react_1.useState)('');
+    const [riskTolerance, setRiskTolerance] = useState(0.5);
+    const [optimizationResults, setOptimizationResults] = useState([]);
+    const [isOptimizing, setIsOptimizing] = useState(false);
+    const [status, setStatus] = useState('');
     const handleTokenAmountChange = (index, amount) => {
         const newTokens = [...availableTokens];
         newTokens[index].amount = amount;
@@ -76,6 +74,6 @@ const LiquidityOptimizer = () => {
             setStatus('Failed to execute liquidity strategy');
         }
     };
-    return ((0, jsx_runtime_1.jsxs)("div", { className: "liquidity-optimizer", children: [(0, jsx_runtime_1.jsx)("h2", { children: "AI Liquidity Optimizer" }), (0, jsx_runtime_1.jsxs)("div", { className: "token-inputs", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Available Tokens" }), availableTokens.map((token, index) => ((0, jsx_runtime_1.jsxs)("div", { className: "input-group", children: [(0, jsx_runtime_1.jsxs)("label", { children: [token.token, ":"] }), (0, jsx_runtime_1.jsx)("input", { type: "number", value: token.amount, onChange: (e) => handleTokenAmountChange(index, e.target.value), placeholder: `Enter ${token.token} amount`, min: "0", step: "0.1" })] }, token.token)))] }), (0, jsx_runtime_1.jsxs)("div", { className: "risk-tolerance", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Risk Tolerance" }), (0, jsx_runtime_1.jsx)("input", { type: "range", min: "0", max: "1", step: "0.1", value: riskTolerance, onChange: (e) => setRiskTolerance(parseFloat(e.target.value)) }), (0, jsx_runtime_1.jsxs)("span", { children: [(riskTolerance * 100).toFixed(0), "%"] })] }), (0, jsx_runtime_1.jsx)("button", { onClick: optimizeLiquidity, disabled: isOptimizing || !availableTokens.some(t => t.amount), className: "primary-button", children: isOptimizing ? 'Optimizing...' : 'Optimize Liquidity' }), optimizationResults.length > 0 && ((0, jsx_runtime_1.jsxs)("div", { className: "optimization-results", children: [(0, jsx_runtime_1.jsx)("h3", { children: "Optimal Allocation Strategy" }), optimizationResults.map((result, index) => ((0, jsx_runtime_1.jsxs)("div", { className: "allocation", children: [(0, jsx_runtime_1.jsx)("h4", { children: result.protocol }), (0, jsx_runtime_1.jsxs)("p", { children: ["Pair: ", result.tokenA, "/", result.tokenB] }), (0, jsx_runtime_1.jsxs)("p", { children: ["Amount: ", result.amountA, " ", result.tokenA, " + ", result.amountB, " ", result.tokenB] }), (0, jsx_runtime_1.jsxs)("p", { children: ["Expected APY: ", result.expectedApy.toFixed(2), "%"] })] }, index))), (0, jsx_runtime_1.jsx)("button", { onClick: executeStrategy, className: "success-button", children: "Execute Strategy" })] })), status && ((0, jsx_runtime_1.jsx)("div", { className: `status-message ${status.includes('Error') ? 'error' : 'success'}`, children: status }))] }));
+    return (_jsxs("div", { className: "liquidity-optimizer", children: [_jsx("h2", { children: "AI Liquidity Optimizer" }), _jsxs("div", { className: "token-inputs", children: [_jsx("h3", { children: "Available Tokens" }), availableTokens.map((token, index) => (_jsxs("div", { className: "input-group", children: [_jsxs("label", { children: [token.token, ":"] }), _jsx("input", { type: "number", value: token.amount, onChange: (e) => handleTokenAmountChange(index, e.target.value), placeholder: `Enter ${token.token} amount`, min: "0", step: "0.1" })] }, token.token)))] }), _jsxs("div", { className: "risk-tolerance", children: [_jsx("h3", { children: "Risk Tolerance" }), _jsx("input", { type: "range", min: "0", max: "1", step: "0.1", value: riskTolerance, onChange: (e) => setRiskTolerance(parseFloat(e.target.value)) }), _jsxs("span", { children: [(riskTolerance * 100).toFixed(0), "%"] })] }), _jsx("button", { onClick: optimizeLiquidity, disabled: isOptimizing || !availableTokens.some(t => t.amount), className: "primary-button", children: isOptimizing ? 'Optimizing...' : 'Optimize Liquidity' }), optimizationResults.length > 0 && (_jsxs("div", { className: "optimization-results", children: [_jsx("h3", { children: "Optimal Allocation Strategy" }), optimizationResults.map((result, index) => (_jsxs("div", { className: "allocation", children: [_jsx("h4", { children: result.protocol }), _jsxs("p", { children: ["Pair: ", result.tokenA, "/", result.tokenB] }), _jsxs("p", { children: ["Amount: ", result.amountA, " ", result.tokenA, " + ", result.amountB, " ", result.tokenB] }), _jsxs("p", { children: ["Expected APY: ", result.expectedApy.toFixed(2), "%"] })] }, index))), _jsx("button", { onClick: executeStrategy, className: "success-button", children: "Execute Strategy" })] })), status && (_jsx("div", { className: `status-message ${status.includes('Error') ? 'error' : 'success'}`, children: status }))] }));
 };
-exports.default = LiquidityOptimizer;
+export default LiquidityOptimizer;

@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PetraProvider = exports.usePetra = void 0;
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = require("react");
-const PetraContext = (0, react_1.createContext)({
+import { jsx as _jsx } from "react/jsx-runtime";
+import { createContext, useContext, useEffect, useState, } from "react";
+const PetraContext = createContext({
     account: null,
     network: null,
     connect: async () => { },
@@ -12,16 +9,15 @@ const PetraContext = (0, react_1.createContext)({
     error: null,
     isPetraInstalled: false,
 });
-const usePetra = () => (0, react_1.useContext)(PetraContext);
-exports.usePetra = usePetra;
-const PetraProvider = ({ children }) => {
-    const [account, setAccount] = (0, react_1.useState)(null);
-    const [network, setNetwork] = (0, react_1.useState)(null);
-    const [isConnecting, setIsConnecting] = (0, react_1.useState)(false);
-    const [error, setError] = (0, react_1.useState)(null);
-    const [isPetraInstalled, setIsPetraInstalled] = (0, react_1.useState)(false);
+export const usePetra = () => useContext(PetraContext);
+export const PetraProvider = ({ children }) => {
+    const [account, setAccount] = useState(null);
+    const [network, setNetwork] = useState(null);
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [error, setError] = useState(null);
+    const [isPetraInstalled, setIsPetraInstalled] = useState(false);
     // Check if Petra is installed
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const checkPetra = () => {
             const isInstalled = typeof window !== "undefined" && !!window.aptos;
             console.log("Petra wallet installed:", isInstalled);
@@ -34,7 +30,7 @@ const PetraProvider = ({ children }) => {
         checkPetra();
     }, []);
     // Initialize and check for existing connection
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         const initPetra = async () => {
             if (!window.aptos) {
                 console.log("Petra wallet not found during initialization");
@@ -66,7 +62,7 @@ const PetraProvider = ({ children }) => {
         initPetra();
     }, []);
     // Setup event listeners
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         if (!window.aptos) {
             console.log("Petra wallet not found during event setup");
             return;
@@ -140,7 +136,7 @@ const PetraProvider = ({ children }) => {
             setError(err.message || "Failed to disconnect wallet");
         }
     };
-    return ((0, jsx_runtime_1.jsx)(PetraContext.Provider, { value: {
+    return (_jsx(PetraContext.Provider, { value: {
             account,
             network,
             connect,
@@ -150,4 +146,3 @@ const PetraProvider = ({ children }) => {
             isPetraInstalled,
         }, children: children }));
 };
-exports.PetraProvider = PetraProvider;

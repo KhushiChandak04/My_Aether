@@ -1,31 +1,24 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.wss = void 0;
-const cors_1 = __importDefault(require("cors"));
-const express_1 = __importDefault(require("express"));
-const ws_1 = __importDefault(require("ws"));
-const defi_1 = __importDefault(require("./routes/defi"));
-const liquidity_1 = __importDefault(require("./routes/liquidity"));
-const market_1 = __importDefault(require("./routes/market"));
-const app = (0, express_1.default)();
+import cors from "cors";
+import express from "express";
+import WebSocket from "ws";
+import defiRoutes from "./routes/defi";
+import liquidityRoutes from "./routes/liquidity";
+import marketRoutes from "./routes/market";
+const app = express();
 const port = process.env.PORT || 3001;
 // Middleware
-app.use((0, cors_1.default)());
-app.use(express_1.default.json());
+app.use(cors());
+app.use(express.json());
 // Routes
-app.use("/api/defi", defi_1.default);
-app.use("/api/liquidity", liquidity_1.default);
-app.use("/api/market", market_1.default);
+app.use("/api/defi", defiRoutes);
+app.use("/api/liquidity", liquidityRoutes);
+app.use("/api/market", marketRoutes);
 // Start server
 const server = app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });
 // WebSocket server for real-time updates
-const wss = new ws_1.default.Server({ server });
-exports.wss = wss;
+const wss = new WebSocket.Server({ server });
 wss.on("connection", (ws) => {
     console.log("Client connected");
     // Send initial data
@@ -60,4 +53,5 @@ wss.on("connection", (ws) => {
         clearInterval(updateInterval);
     });
 });
-exports.default = app;
+export { wss }; // Export for external use
+export default app;

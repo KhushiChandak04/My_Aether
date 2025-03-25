@@ -1,26 +1,11 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.marketService = void 0;
-const axios_1 = __importDefault(require("axios"));
+import axios from 'axios';
 class MarketService {
     constructor() {
-        this.API_BASE_URL = 'https://api.coingecko.com/api/v3';
+        this.API_BASE_URL = 'http://localhost:4000/api';
     }
-    async getTopCryptos(limit = 100) {
+    async getTopCryptos() {
         try {
-            const response = await axios_1.default.get(`${this.API_BASE_URL}/coins/markets`, {
-                params: {
-                    vs_currency: 'usd',
-                    order: 'market_cap_desc',
-                    per_page: limit,
-                    page: 1,
-                    sparkline: true,
-                    price_change_percentage: '24h'
-                }
-            });
+            const response = await axios.get(`${this.API_BASE_URL}/market/crypto`);
             return response.data;
         }
         catch (error) {
@@ -29,23 +14,15 @@ class MarketService {
         }
     }
     async getCryptoDetails(id) {
-        try {
-            const response = await axios_1.default.get(`${this.API_BASE_URL}/coins/${id}`);
+        return this.retryWithDelay(async () => {
+            const response = await axios.get(`${this.API_BASE_URL}/market/crypto/${id}`);
             return response.data;
-        }
-        catch (error) {
-            console.error('Error fetching crypto details:', error);
-            return null;
-        }
+        });
     }
     async getHistoricalData(id, days = 7) {
         try {
-            const response = await axios_1.default.get(`${this.API_BASE_URL}/coins/${id}/market_chart`, {
-                params: {
-                    vs_currency: 'usd',
-                    days: days,
-                    interval: days <= 1 ? 'minute' : 'daily'
-                }
+            const response = await axios.get(`${this.API_BASE_URL}/market/crypto/${id}/history`, {
+                params: { days }
             });
             return response.data;
         }
@@ -56,7 +33,7 @@ class MarketService {
     }
     async getMarketStats() {
         try {
-            const response = await axios_1.default.get(`${this.API_BASE_URL}/global`);
+            const response = await axios.get(`${this.API_BASE_URL}/market/stats`);
             return response.data;
         }
         catch (error) {
@@ -64,5 +41,25 @@ class MarketService {
             return null;
         }
     }
+    // Add retry logic and rate limit handling
+    async retryWithDelay(operation, retries = 3, delay = 1000) {
+        try {
+            return await operation();
+        }
+        catch (error) {
+            if (retries === 0 || !axios.isAxiosError(error)) {
+                throw error;
+            }
+            // Handle rate limiting specifically
+            if (error.response?.status === 429) {
+                const waitTime = parseInt(error.response.headers['retry-after']) * 1000 || delay;
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                return this.retryWithDelay(operation, retries - 1, delay * 2);
+            }
+            // Handle other errors with exponential backoff
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return this.retryWithDelay(operation, retries - 1, delay * 2);
+        }
+    }
 }
-exports.marketService = new MarketService();
+export const marketService = new MarketService();

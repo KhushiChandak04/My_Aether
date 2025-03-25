@@ -1,12 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.tradingBotService = void 0;
-const web3_1 = __importDefault(require("web3"));
-const aptosService_1 = require("./aptosService");
-const api_1 = require("./api");
+import Web3 from "web3";
+import { AptosService } from "./aptosService";
+import { api } from "./api";
 class TradingBotService {
     constructor() {
         this.activeConfigs = new Map();
@@ -65,12 +59,12 @@ class TradingBotService {
         if (typeof window !== "undefined" && window.ethereum) {
             // Cast window.ethereum to provider type for Web3
             const provider = window.ethereum;
-            this.web3Instance = new web3_1.default(provider);
+            this.web3Instance = new Web3(provider);
         }
         else {
-            this.web3Instance = new web3_1.default("http://localhost:8545");
+            this.web3Instance = new Web3("http://localhost:8545");
         }
-        this.aptosService = new aptosService_1.AptosService();
+        this.aptosService = new AptosService();
     }
     async startTrading(config) {
         try {
@@ -209,7 +203,7 @@ class TradingBotService {
     }
     async recordTrade(trade) {
         try {
-            await api_1.api.recordTrade(trade);
+            await api.recordTrade(trade);
         }
         catch (error) {
             console.error("Failed to record trade:", error);
@@ -363,4 +357,4 @@ class TradingBotService {
         return this.strategies.find((s) => s.id === strategyId);
     }
 }
-exports.tradingBotService = new TradingBotService();
+export const tradingBotService = new TradingBotService();

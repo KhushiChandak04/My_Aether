@@ -1,16 +1,11 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const wallet_1 = require("../../wallet");
-const liquidityOptimizer_1 = require("../../services/liquidityOptimizer");
-const router = express_1.default.Router();
+import express from 'express';
+import { AIWallet } from '../../wallet';
+import { LiquidityOptimizer } from '../../services/liquidityOptimizer';
+const router = express.Router();
 const NODE_URL = process.env.APTOS_NODE_URL || 'https://fullnode.devnet.aptoslabs.com';
 // Initialize wallet
-const wallet = new wallet_1.AIWallet(NODE_URL);
-const optimizer = new liquidityOptimizer_1.LiquidityOptimizer(wallet.protocolManager);
+const wallet = new AIWallet(NODE_URL);
+const optimizer = new LiquidityOptimizer(wallet.protocolManager);
 // Get current liquidity balance
 router.get('/balance', async (_req, res) => {
     try {
@@ -135,4 +130,4 @@ router.post('/execute', async (req, res) => {
         });
     }
 });
-exports.default = router;
+export default router;

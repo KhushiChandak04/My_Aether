@@ -1,13 +1,7 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.connectToDatabase = connectToDatabase;
-const mongodb_1 = require("mongodb");
-const dotenv_1 = __importDefault(require("dotenv"));
+import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
 // Load environment variables
-dotenv_1.default.config();
+dotenv.config();
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || 'aether';
 if (!uri) {
@@ -35,7 +29,7 @@ const options = {
     maxPoolSize: 50,
     tls: true,
 };
-async function connectToDatabase() {
+export async function connectToDatabase() {
     try {
         // If we already have a connection, return it
         if (mongoClient && await mongoClient.db(dbName).command({ ping: 1 })) {
@@ -47,7 +41,7 @@ async function connectToDatabase() {
             mongoClient = null;
         }
         // Connect to MongoDB Atlas
-        mongoClient = new mongodb_1.MongoClient(uri, options);
+        mongoClient = new MongoClient(uri, options);
         await mongoClient.connect();
         console.log('\x1b[32m%s\x1b[0m', 'Successfully connected to MongoDB Atlas');
         // Reset retry count on successful connection

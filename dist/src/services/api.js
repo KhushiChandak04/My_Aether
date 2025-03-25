@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.api = void 0;
 const API_BASE_URL = '/api';
-exports.api = {
+export const api = {
     async recordTrade(trade) {
         try {
             // Ensure all required fields are present

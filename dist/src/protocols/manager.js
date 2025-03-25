@@ -1,16 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProtocolManager = void 0;
-const types_1 = require("./types");
-const liquidswap_1 = require("./liquidswap");
-const aptin_1 = require("./aptin");
-class ProtocolManager {
+import { ProtocolType } from "./types";
+import { LiquidswapProtocol } from "./liquidswap";
+import { AptinProtocol } from "./aptin";
+export class ProtocolManager {
     constructor(wallet) {
         this.wallet = wallet;
         this.protocols = new Map();
         // Initialize supported protocols
-        this.registerProtocol(new liquidswap_1.LiquidswapProtocol());
-        this.registerProtocol(new aptin_1.AptinProtocol());
+        this.registerProtocol(new LiquidswapProtocol());
+        this.registerProtocol(new AptinProtocol());
     }
     registerProtocol(protocol) {
         this.protocols.set(protocol.name, protocol);
@@ -35,7 +32,7 @@ class ProtocolManager {
     }
     async getOptimalSwapRoute(tokenIn, tokenOut, amount) {
         // Get all DEX protocols
-        const dexes = this.getProtocolsByType(types_1.ProtocolType.DEX);
+        const dexes = this.getProtocolsByType(ProtocolType.DEX);
         if (dexes.length === 0) {
             throw new Error("No DEX protocols available");
         }
@@ -54,7 +51,7 @@ class ProtocolManager {
     }
     async getOptimalLendingProtocol(token, amount) {
         // Get all lending protocols
-        const lendingProtocols = this.getProtocolsByType(types_1.ProtocolType.LENDING);
+        const lendingProtocols = this.getProtocolsByType(ProtocolType.LENDING);
         if (lendingProtocols.length === 0) {
             throw new Error("No lending protocols available");
         }
@@ -71,4 +68,3 @@ class ProtocolManager {
         };
     }
 }
-exports.ProtocolManager = ProtocolManager;

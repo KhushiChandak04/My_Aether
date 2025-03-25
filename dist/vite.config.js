@@ -1,20 +1,18 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const vite_1 = require("vite");
-const plugin_react_1 = __importDefault(require("@vitejs/plugin-react"));
-const path_1 = require("path");
-exports.default = (0, vite_1.defineConfig)({
-    plugins: [(0, plugin_react_1.default)()],
-    root: (0, path_1.resolve)(__dirname, 'src/web'),
-    publicDir: (0, path_1.resolve)(__dirname, 'src/web/public'),
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
+import dotenv from 'dotenv';
+// Load environment variables
+dotenv.config();
+export default defineConfig({
+    plugins: [react()],
+    root: resolve(__dirname, 'src/web'),
+    publicDir: resolve(__dirname, 'src/web/public'),
     server: {
-        port: 4000,
+        port: 3000,
         proxy: {
             '/api': {
-                target: 'http://localhost:3000',
+                target: 'http://localhost:4000',
                 changeOrigin: true,
                 secure: false,
                 configure: (proxy, _options) => {
@@ -34,19 +32,23 @@ exports.default = (0, vite_1.defineConfig)({
                 }
             },
             '/ws': {
-                target: 'ws://localhost:3000',
+                target: 'ws://localhost:4000',
                 ws: true,
                 changeOrigin: true
             },
         },
     },
     build: {
-        outDir: (0, path_1.resolve)(__dirname, 'dist/web'),
+        outDir: resolve(__dirname, 'dist/web'),
         emptyOutDir: true,
     },
     resolve: {
         alias: {
-            '@': (0, path_1.resolve)(__dirname, 'src'),
+            '@': resolve(__dirname, 'src'),
         },
     },
+    define: {
+        'process.env.MODULE_ADDRESS': JSON.stringify(process.env.MODULE_ADDRESS),
+        'process.env.APTOS_NODE_URL': JSON.stringify(process.env.APTOS_NODE_URL)
+    }
 });

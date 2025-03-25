@@ -1,13 +1,8 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const react_1 = __importDefault(require("react"));
-const material_1 = require("@mui/material");
-const icons_material_1 = require("@mui/icons-material");
-const recharts_1 = require("recharts");
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React from 'react';
+import { Box, Typography, Paper, IconButton, } from '@mui/material';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 const data = [
     { name: 'Stock name', value: 35, color: '#F59E0B' },
     { name: 'Stock name', value: 25, color: '#EC4899' },
@@ -16,7 +11,7 @@ const data = [
 const months = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 const Investments = () => {
-    const [currentDate, setCurrentDate] = react_1.default.useState(new Date());
+    const [currentDate, setCurrentDate] = React.useState(new Date());
     const currentMonthDisplay = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
     const handlePrevMonth = () => {
         setCurrentDate(prev => {
@@ -32,34 +27,34 @@ const Investments = () => {
             return newDate;
         });
     };
-    return ((0, jsx_runtime_1.jsxs)(material_1.Paper, { sx: { p: 3 }, children: [(0, jsx_runtime_1.jsxs)(material_1.Box, { sx: {
+    return (_jsxs(Paper, { sx: { p: 3 }, children: [_jsxs(Box, { sx: {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     mb: 3
-                }, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h6", children: "Investments" }), (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: 'flex', alignItems: 'center', gap: 1 }, children: [(0, jsx_runtime_1.jsx)(material_1.IconButton, { size: "small", onClick: handlePrevMonth, children: (0, jsx_runtime_1.jsx)(icons_material_1.ChevronLeft, {}) }), (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body2", children: currentMonthDisplay }), (0, jsx_runtime_1.jsx)(material_1.IconButton, { size: "small", onClick: handleNextMonth, children: (0, jsx_runtime_1.jsx)(icons_material_1.ChevronRight, {}) })] })] }), (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: {
+                }, children: [_jsx(Typography, { variant: "h6", children: "Investments" }), _jsxs(Box, { sx: { display: 'flex', alignItems: 'center', gap: 1 }, children: [_jsx(IconButton, { size: "small", onClick: handlePrevMonth, children: _jsx(ChevronLeft, {}) }), _jsx(Typography, { variant: "body2", children: currentMonthDisplay }), _jsx(IconButton, { size: "small", onClick: handleNextMonth, children: _jsx(ChevronRight, {}) })] })] }), _jsxs(Box, { sx: {
                     height: 300,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative'
-                }, children: [(0, jsx_runtime_1.jsx)(recharts_1.ResponsiveContainer, { width: "100%", height: "100%", children: (0, jsx_runtime_1.jsx)(recharts_1.PieChart, { children: (0, jsx_runtime_1.jsx)(recharts_1.Pie, { data: data, innerRadius: 60, outerRadius: 80, paddingAngle: 5, dataKey: "value", children: data.map((entry, index) => ((0, jsx_runtime_1.jsx)(recharts_1.Cell, { fill: entry.color }, `cell-${index}`))) }) }) }), (0, jsx_runtime_1.jsx)(material_1.Box, { sx: {
+                }, children: [_jsx(ResponsiveContainer, { width: "100%", height: "100%", children: _jsx(PieChart, { children: _jsx(Pie, { data: data, innerRadius: 60, outerRadius: 80, paddingAngle: 5, dataKey: "value", children: data.map((entry, index) => (_jsx(Cell, { fill: entry.color }, `cell-${index}`))) }) }) }), _jsx(Box, { sx: {
                             position: 'absolute',
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
                             textAlign: 'center'
-                        }, children: (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h4", children: "45623" }) })] }), (0, jsx_runtime_1.jsx)(material_1.Box, { sx: { mt: 2 }, children: data.map((item, index) => ((0, jsx_runtime_1.jsxs)(material_1.Box, { sx: {
+                        }, children: _jsx(Typography, { variant: "h4", children: "45623" }) })] }), _jsx(Box, { sx: { mt: 2 }, children: data.map((item, index) => (_jsxs(Box, { sx: {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         mb: 1
-                    }, children: [(0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: 'flex', alignItems: 'center', gap: 1 }, children: [(0, jsx_runtime_1.jsx)(material_1.Box, { sx: {
+                    }, children: [_jsxs(Box, { sx: { display: 'flex', alignItems: 'center', gap: 1 }, children: [_jsx(Box, { sx: {
                                         width: 12,
                                         height: 12,
                                         borderRadius: '50%',
                                         bgcolor: item.color
-                                    } }), (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body2", children: item.name })] }), (0, jsx_runtime_1.jsxs)(material_1.Typography, { variant: "body2", sx: { color: 'success.main' }, children: ["+", item.value, "%"] })] }, index))) })] }));
+                                    } }), _jsx(Typography, { variant: "body2", children: item.name })] }), _jsxs(Typography, { variant: "body2", sx: { color: 'success.main' }, children: ["+", item.value, "%"] })] }, index))) })] }));
 };
-exports.default = Investments;
+export default Investments;

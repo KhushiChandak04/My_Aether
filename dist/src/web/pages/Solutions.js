@@ -1,13 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const material_1 = require("@mui/material");
-const icons_material_1 = require("@mui/icons-material");
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Container, Grid, Typography, Card, CardContent, Box, Button, } from '@mui/material';
+import { TrendingUp, Analytics, AccountBalanceWallet, Shield } from '@mui/icons-material';
 const solutions = [
     {
         title: 'DeFi Trading',
         description: 'Automated DeFi trading solutions with advanced portfolio management and risk assessment.',
-        icon: icons_material_1.TrendingUp,
+        icon: TrendingUp,
         benefits: [
             'Automated yield farming',
             'Cross-chain trading',
@@ -18,7 +16,7 @@ const solutions = [
     {
         title: 'Market Analysis',
         description: 'Real-time market analysis with AI-powered insights and predictive modeling.',
-        icon: icons_material_1.Analytics,
+        icon: Analytics,
         benefits: [
             'Market sentiment analysis',
             'Technical indicators',
@@ -29,7 +27,7 @@ const solutions = [
     {
         title: 'Asset Management',
         description: 'Professional-grade digital asset management with institutional security.',
-        icon: icons_material_1.AccountBalanceWallet,
+        icon: AccountBalanceWallet,
         benefits: [
             'Portfolio rebalancing',
             'Risk management',
@@ -40,7 +38,7 @@ const solutions = [
     {
         title: 'Security Solutions',
         description: 'Enterprise-level security solutions for digital asset protection.',
-        icon: icons_material_1.Shield,
+        icon: Shield,
         benefits: [
             'Multi-signature wallets',
             'Cold storage',
@@ -50,9 +48,9 @@ const solutions = [
     }
 ];
 const Solutions = () => {
-    return ((0, jsx_runtime_1.jsxs)(material_1.Container, { maxWidth: "xl", sx: { py: 8 }, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h3", component: "h1", gutterBottom: true, align: "center", sx: { mb: 6 }, children: "Solutions" }), (0, jsx_runtime_1.jsx)(material_1.Grid, { container: true, spacing: 4, children: solutions.map((solution, index) => {
+    return (_jsxs(Container, { maxWidth: "xl", sx: { py: 8 }, children: [_jsx(Typography, { variant: "h3", component: "h1", gutterBottom: true, align: "center", sx: { mb: 6 }, children: "Solutions" }), _jsx(Grid, { container: true, spacing: 4, children: solutions.map((solution, index) => {
                     const Icon = solution.icon;
-                    return ((0, jsx_runtime_1.jsx)(material_1.Grid, { item: true, xs: 12, md: 6, children: (0, jsx_runtime_1.jsx)(material_1.Card, { sx: {
+                    return (_jsx(Grid, { item: true, xs: 12, md: 6, children: _jsx(Card, { sx: {
                                 height: '100%',
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -60,7 +58,7 @@ const Solutions = () => {
                                     transform: 'translateY(-4px)',
                                     transition: 'transform 0.3s ease-in-out'
                                 }
-                            }, children: (0, jsx_runtime_1.jsxs)(material_1.CardContent, { sx: { flexGrow: 1 }, children: [(0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: 'flex', alignItems: 'center', mb: 2 }, children: [(0, jsx_runtime_1.jsx)(Icon, { sx: { fontSize: 40, mr: 2, color: 'primary.main' } }), (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h5", component: "h2", children: solution.title })] }), (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body1", color: "text.secondary", paragraph: true, children: solution.description }), (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h6", sx: { mb: 2 }, children: "Key Benefits" }), (0, jsx_runtime_1.jsx)(material_1.Box, { component: "ul", sx: { pl: 2 }, children: solution.benefits.map((benefit, idx) => ((0, jsx_runtime_1.jsx)(material_1.Typography, { component: "li", variant: "body2", color: "text.secondary", sx: { mb: 1 }, children: benefit }, idx))) }), (0, jsx_runtime_1.jsx)(material_1.Box, { sx: { mt: 2 }, children: (0, jsx_runtime_1.jsx)(material_1.Button, { variant: "contained", color: "primary", children: "Learn More" }) })] }) }) }, index));
+                            }, children: _jsxs(CardContent, { sx: { flexGrow: 1 }, children: [_jsxs(Box, { sx: { display: 'flex', alignItems: 'center', mb: 2 }, children: [_jsx(Icon, { sx: { fontSize: 40, mr: 2, color: 'primary.main' } }), _jsx(Typography, { variant: "h5", component: "h2", children: solution.title })] }), _jsx(Typography, { variant: "body1", color: "text.secondary", paragraph: true, children: solution.description }), _jsx(Typography, { variant: "h6", sx: { mb: 2 }, children: "Key Benefits" }), _jsx(Box, { component: "ul", sx: { pl: 2 }, children: solution.benefits.map((benefit, idx) => (_jsx(Typography, { component: "li", variant: "body2", color: "text.secondary", sx: { mb: 1 }, children: benefit }, idx))) }), _jsx(Box, { sx: { mt: 2 }, children: _jsx(Button, { variant: "contained", color: "primary", children: "Learn More" }) })] }) }) }, index));
                 }) })] }));
 };
-exports.default = Solutions;
+export default Solutions;

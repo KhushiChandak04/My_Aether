@@ -1,10 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const jsx_runtime_1 = require("react/jsx-runtime");
-const icons_material_1 = require("@mui/icons-material");
-const material_1 = require("@mui/material");
-const react_1 = require("react");
-const recharts_1 = require("recharts");
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Refresh, Star, StarBorder, TrendingDown, TrendingUp, } from "@mui/icons-material";
+import { Alert, Box, Chip, CircularProgress, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, } from "@mui/material";
+import { useEffect, useState, useCallback } from "react";
+import { Area, AreaChart, ResponsiveContainer, } from "recharts";
 const formatPrice = (price) => {
     if (price >= 1000000000) {
         return `$${(price / 1000000000).toFixed(2)}B`;
@@ -21,15 +19,15 @@ const formatPriceChange = (change) => {
     return change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
 };
 const MarketUpdate = () => {
-    const [cryptoData, setCryptoData] = (0, react_1.useState)([]);
-    const [loading, setLoading] = (0, react_1.useState)(true);
-    const [error, setError] = (0, react_1.useState)(null);
-    const [favorites, setFavorites] = (0, react_1.useState)([]);
-    const [lastUpdated, setLastUpdated] = (0, react_1.useState)(new Date());
-    const [retryCount, setRetryCount] = (0, react_1.useState)(0);
+    const [cryptoData, setCryptoData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [favorites, setFavorites] = useState([]);
+    const [lastUpdated, setLastUpdated] = useState(new Date());
+    const [retryCount, setRetryCount] = useState(0);
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 5000; // 5 seconds
-    const fetchCryptoData = (0, react_1.useCallback)(async (isRetry = false) => {
+    const fetchCryptoData = useCallback(async (isRetry = false) => {
         try {
             if (!isRetry) {
                 setLoading(true);
@@ -64,7 +62,7 @@ const MarketUpdate = () => {
             setLoading(false);
         }
     }, [retryCount]);
-    (0, react_1.useEffect)(() => {
+    useEffect(() => {
         fetchCryptoData();
         const interval = setInterval(() => fetchCryptoData(), 30000); // Update every 30 seconds
         return () => clearInterval(interval);
@@ -77,19 +75,19 @@ const MarketUpdate = () => {
         fetchCryptoData();
     };
     if (loading && !cryptoData.length) {
-        return ((0, jsx_runtime_1.jsx)(material_1.Box, { sx: { display: "flex", justifyContent: "center", p: 3 }, children: (0, jsx_runtime_1.jsx)(material_1.CircularProgress, {}) }));
+        return (_jsx(Box, { sx: { display: "flex", justifyContent: "center", p: 3 }, children: _jsx(CircularProgress, {}) }));
     }
-    return ((0, jsx_runtime_1.jsxs)(material_1.Paper, { sx: { p: 3 }, children: [(0, jsx_runtime_1.jsxs)(material_1.Box, { sx: {
+    return (_jsxs(Paper, { sx: { p: 3 }, children: [_jsxs(Box, { sx: {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     mb: 2,
-                }, children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "h6", children: "Market Update" }), (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: "flex", alignItems: "center", gap: 2 }, children: [(0, jsx_runtime_1.jsxs)(material_1.Typography, { variant: "caption", color: "text.secondary", children: ["Last updated: ", lastUpdated.toLocaleTimeString()] }), (0, jsx_runtime_1.jsx)(material_1.IconButton, { onClick: handleRefresh, size: "small", disabled: loading, children: (0, jsx_runtime_1.jsx)(icons_material_1.Refresh, {}) })] })] }), error && ((0, jsx_runtime_1.jsx)(material_1.Alert, { severity: retryCount < MAX_RETRIES ? "info" : "error", sx: { mb: 2 }, children: error })), (0, jsx_runtime_1.jsx)(material_1.TableContainer, { children: (0, jsx_runtime_1.jsxs)(material_1.Table, { children: [(0, jsx_runtime_1.jsx)(material_1.TableHead, { children: (0, jsx_runtime_1.jsxs)(material_1.TableRow, { children: [(0, jsx_runtime_1.jsx)(material_1.TableCell, { width: 30, children: "#" }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { children: "Symbol" }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: "Price" }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: "24h %" }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: "Market Cap" }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: "24h Chart" }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { width: 50 })] }) }), (0, jsx_runtime_1.jsx)(material_1.TableBody, { children: cryptoData.map((crypto) => ((0, jsx_runtime_1.jsxs)(material_1.TableRow, { sx: {
+                }, children: [_jsx(Typography, { variant: "h6", children: "Market Update" }), _jsxs(Box, { sx: { display: "flex", alignItems: "center", gap: 2 }, children: [_jsxs(Typography, { variant: "caption", color: "text.secondary", children: ["Last updated: ", lastUpdated.toLocaleTimeString()] }), _jsx(IconButton, { onClick: handleRefresh, size: "small", disabled: loading, children: _jsx(Refresh, {}) })] })] }), error && (_jsx(Alert, { severity: retryCount < MAX_RETRIES ? "info" : "error", sx: { mb: 2 }, children: error })), _jsx(TableContainer, { children: _jsxs(Table, { children: [_jsx(TableHead, { children: _jsxs(TableRow, { children: [_jsx(TableCell, { width: 30, children: "#" }), _jsx(TableCell, { children: "Symbol" }), _jsx(TableCell, { align: "right", children: "Price" }), _jsx(TableCell, { align: "right", children: "24h %" }), _jsx(TableCell, { align: "right", children: "Market Cap" }), _jsx(TableCell, { align: "right", children: "24h Chart" }), _jsx(TableCell, { width: 50 })] }) }), _jsx(TableBody, { children: cryptoData.map((crypto) => (_jsxs(TableRow, { sx: {
                                     "&:hover": {
                                         bgcolor: "action.hover",
                                     },
-                                }, children: [(0, jsx_runtime_1.jsx)(material_1.TableCell, { children: crypto.market_cap_rank }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { children: (0, jsx_runtime_1.jsxs)(material_1.Box, { sx: { display: "flex", alignItems: "center", gap: 1 }, children: [(0, jsx_runtime_1.jsx)("img", { src: crypto.image, alt: crypto.name, style: { width: 24, height: 24 } }), (0, jsx_runtime_1.jsxs)(material_1.Box, { children: [(0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body2", children: crypto.name }), (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "caption", color: "text.secondary", children: crypto.symbol.toUpperCase() })] })] }) }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: (0, jsx_runtime_1.jsx)(material_1.Typography, { variant: "body2", children: formatPrice(crypto.current_price) }) }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: (0, jsx_runtime_1.jsx)(material_1.Chip, { icon: crypto.price_change_percentage_24h > 0 ? ((0, jsx_runtime_1.jsx)(icons_material_1.TrendingUp, {})) : ((0, jsx_runtime_1.jsx)(icons_material_1.TrendingDown, {})), label: formatPriceChange(crypto.price_change_percentage_24h), size: "small", color: crypto.price_change_percentage_24h > 0
+                                }, children: [_jsx(TableCell, { children: crypto.market_cap_rank }), _jsx(TableCell, { children: _jsxs(Box, { sx: { display: "flex", alignItems: "center", gap: 1 }, children: [_jsx("img", { src: crypto.image, alt: crypto.name, style: { width: 24, height: 24 } }), _jsxs(Box, { children: [_jsx(Typography, { variant: "body2", children: crypto.name }), _jsx(Typography, { variant: "caption", color: "text.secondary", children: crypto.symbol.toUpperCase() })] })] }) }), _jsx(TableCell, { align: "right", children: _jsx(Typography, { variant: "body2", children: formatPrice(crypto.current_price) }) }), _jsx(TableCell, { align: "right", children: _jsx(Chip, { icon: crypto.price_change_percentage_24h > 0 ? (_jsx(TrendingUp, {})) : (_jsx(TrendingDown, {})), label: formatPriceChange(crypto.price_change_percentage_24h), size: "small", color: crypto.price_change_percentage_24h > 0
                                                 ? "success"
-                                                : "error" }) }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", children: formatPrice(crypto.market_cap) }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { align: "right", sx: { width: 200 }, children: crypto.sparkline_in_7d && ((0, jsx_runtime_1.jsx)(recharts_1.ResponsiveContainer, { width: "100%", height: 50, children: (0, jsx_runtime_1.jsxs)(recharts_1.AreaChart, { data: crypto.sparkline_in_7d.price.map((price, i) => ({ price, i })), children: [(0, jsx_runtime_1.jsx)("defs", { children: (0, jsx_runtime_1.jsxs)("linearGradient", { id: `gradient-${crypto.id}`, x1: "0", y1: "0", x2: "0", y2: "1", children: [(0, jsx_runtime_1.jsx)("stop", { offset: "5%", stopColor: crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336", stopOpacity: 0.8 }), (0, jsx_runtime_1.jsx)("stop", { offset: "95%", stopColor: crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336", stopOpacity: 0 })] }) }), (0, jsx_runtime_1.jsx)(recharts_1.Area, { type: "monotone", dataKey: "price", stroke: crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336", fill: `url(#gradient-${crypto.id})` })] }) })) }), (0, jsx_runtime_1.jsx)(material_1.TableCell, { children: (0, jsx_runtime_1.jsx)(material_1.IconButton, { size: "small", onClick: () => toggleFavorite(crypto.id), children: favorites.includes(crypto.id) ? ((0, jsx_runtime_1.jsx)(icons_material_1.Star, { sx: { color: "warning.main" } })) : ((0, jsx_runtime_1.jsx)(icons_material_1.StarBorder, {})) }) })] }, crypto.id))) })] }) })] }));
+                                                : "error" }) }), _jsx(TableCell, { align: "right", children: formatPrice(crypto.market_cap) }), _jsx(TableCell, { align: "right", sx: { width: 200 }, children: crypto.sparkline_in_7d && (_jsx(ResponsiveContainer, { width: "100%", height: 50, children: _jsxs(AreaChart, { data: crypto.sparkline_in_7d.price.map((price, i) => ({ price, i })), children: [_jsx("defs", { children: _jsxs("linearGradient", { id: `gradient-${crypto.id}`, x1: "0", y1: "0", x2: "0", y2: "1", children: [_jsx("stop", { offset: "5%", stopColor: crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336", stopOpacity: 0.8 }), _jsx("stop", { offset: "95%", stopColor: crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336", stopOpacity: 0 })] }) }), _jsx(Area, { type: "monotone", dataKey: "price", stroke: crypto.price_change_percentage_24h > 0 ? "#4caf50" : "#f44336", fill: `url(#gradient-${crypto.id})` })] }) })) }), _jsx(TableCell, { children: _jsx(IconButton, { size: "small", onClick: () => toggleFavorite(crypto.id), children: favorites.includes(crypto.id) ? (_jsx(Star, { sx: { color: "warning.main" } })) : (_jsx(StarBorder, {})) }) })] }, crypto.id))) })] }) })] }));
 };
-exports.default = MarketUpdate;
+export default MarketUpdate;

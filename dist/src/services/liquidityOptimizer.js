@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.LiquidityOptimizer = void 0;
-const types_1 = require("../protocols/types");
-class LiquidityOptimizer {
+import { ProtocolType, ProtocolAction } from "../protocols/types";
+export class LiquidityOptimizer {
     constructor(protocolManager) {
         this.protocolManager = protocolManager;
     }
@@ -55,7 +52,7 @@ class LiquidityOptimizer {
     async optimizeLiquidity(availableTokens, riskTolerance = 0.5 // 0 = conservative, 1 = aggressive
     ) {
         // Get all DEX protocols
-        const dexProtocols = this.protocolManager.getProtocolsByType(types_1.ProtocolType.DEX);
+        const dexProtocols = this.protocolManager.getProtocolsByType(ProtocolType.DEX);
         // Get pool metrics for each protocol
         const poolMetricsPromises = dexProtocols.map(async (protocol) => {
             const supportedPairs = [
@@ -82,7 +79,7 @@ class LiquidityOptimizer {
                     amountA: allocation.amountA,
                     amountB: allocation.amountB
                 };
-                const tx = await this.protocolManager.executeProtocolAction(allocation.protocol, types_1.ProtocolAction.ADD_LIQUIDITY, params);
+                const tx = await this.protocolManager.executeProtocolAction(allocation.protocol, ProtocolAction.ADD_LIQUIDITY, params);
                 transactions.push(tx);
             }
             catch (error) {
@@ -101,7 +98,7 @@ class LiquidityOptimizer {
         };
         try {
             return await this.protocolManager.executeProtocolAction('pancake', // Default to PancakeSwap for now
-            types_1.ProtocolAction.ADD_LIQUIDITY, params);
+            ProtocolAction.ADD_LIQUIDITY, params);
         }
         catch (error) {
             console.error('Failed to add liquidity:', error);
@@ -117,7 +114,7 @@ class LiquidityOptimizer {
         };
         try {
             return await this.protocolManager.executeProtocolAction('pancake', // Default to PancakeSwap for now
-            types_1.ProtocolAction.REMOVE_LIQUIDITY, params);
+            ProtocolAction.REMOVE_LIQUIDITY, params);
         }
         catch (error) {
             console.error('Failed to remove liquidity:', error);
@@ -125,4 +122,3 @@ class LiquidityOptimizer {
         }
     }
 }
-exports.LiquidityOptimizer = LiquidityOptimizer;
