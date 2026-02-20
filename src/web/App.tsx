@@ -84,7 +84,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <PetraProvider>
-        <Router basename="/My_Aether">
+        <Router>
           <Box sx={{ display: "flex", minHeight: "100vh" }}>
             <CssBaseline />
             <AppBar position="fixed">
