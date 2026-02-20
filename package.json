@@ -5,12 +5,14 @@
   "homepage": "https://devpatel976.github.io/My_Aether",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "vite build",
     "start": "ts-node src/index.ts",
     "dev:frontend": "vite",
     "dev:backend": "ts-node -P tsconfig.server.json src/server.ts",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build:frontend": "vite build",
+    "build:server": "tsc -P tsconfig.server.json",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {
