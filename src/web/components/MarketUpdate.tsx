@@ -52,7 +52,8 @@ const formatPrice = (price: number): string => {
   return `$${price.toFixed(2)}`;
 };
 
-const formatPriceChange = (change: number): string => {
+const formatPriceChange = (change: number | null | undefined): string => {
+  if (change == null) return 'N/A';
   return change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`;
 };
 

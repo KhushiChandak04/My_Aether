@@ -1,8 +1,11 @@
+import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
+import { Network } from "@aptos-labs/ts-sdk";
 import React, {
   createContext,
   ReactNode,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 
@@ -14,22 +17,6 @@ interface PetraContextType {
   isConnecting: boolean;
   error: string | null;
   isPetraInstalled: boolean;
-}
-
-type PetraWallet = {
-  connect: () => Promise<{ address: string }>;
-  disconnect: () => Promise<void>;
-  isConnected: () => Promise<boolean>;
-  account: () => Promise<{ address: string } | null>;
-  network: () => Promise<{ name: string }>;
-  onAccountChange: (listener: (address: string | null) => void) => void;
-  onNetworkChange: (listener: (network: { name: string }) => void) => void;
-};
-
-declare global {
-  interface Window {
-    aptos?: PetraWallet;
-  }
 }
 
 const PetraContext = createContext<PetraContextType>({
@@ -48,137 +35,77 @@ interface PetraProviderProps {
   children: ReactNode;
 }
 
-export const PetraProvider: React.FC<PetraProviderProps> = ({ children }) => {
-  const [account, setAccount] = useState<string | null>(null);
-  const [network, setNetwork] = useState<string | null>(null);
+/**
+ * Inner provider that bridges @aptos-labs/wallet-adapter-react's useWallet
+ * to the existing usePetra() interface used throughout the app.
+ */
+const PetraBridge: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const {
+    connect: adapterConnect,
+    disconnect: adapterDisconnect,
+    account: adapterAccount,
+    connected,
+    wallet,
+    wallets,
+    network: adapterNetwork,
+  } = useWallet();
+
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPetraInstalled, setIsPetraInstalled] = useState(false);
 
-  // Check if Petra is installed
-  useEffect(() => {
-    const checkPetra = () => {
-      const isInstalled = typeof window !== "undefined" && !!window.aptos;
-      console.log("Petra wallet installed:", isInstalled);
-      setIsPetraInstalled(isInstalled);
+  // Derive whether Petra (or any AIP-62 wallet) is available
+  const isPetraInstalled = useMemo(() => {
+    return wallets.some(
+      (w) => w.name.toLowerCase().includes("petra")
+    );
+  }, [wallets]);
 
-      if (!isInstalled) {
-        setError(
-          "Please install Petra wallet to use this application. Visit https://petra.app/"
-        );
-      }
-
-      return isInstalled;
-    };
-
-    checkPetra();
-  }, []);
-
-  // Initialize and check for existing connection
-  useEffect(() => {
-    const initPetra = async () => {
-      if (!window.aptos) {
-        console.log("Petra wallet not found during initialization");
-        setError("Please install Petra wallet to use this application");
-        return;
-      }
-
-      try {
-        console.log("Initializing Petra wallet...");
-
-        // Check if already connected
-        const isConnected = await window.aptos.isConnected();
-
-        if (isConnected) {
-          const accountInfo = await window.aptos.account();
-          if (accountInfo) {
-            console.log("Found existing account:", accountInfo.address);
-            setAccount(accountInfo.address);
-
-            const networkInfo = await window.aptos.network();
-            setNetwork(networkInfo.name);
-          }
-        } else {
-          console.log("No existing account found");
-        }
-      } catch (err) {
-        console.error("Failed to initialize Petra wallet:", err);
-        setError(
-          "Failed to initialize Petra wallet. Please refresh the page and try again."
-        );
-      }
-    };
-
-    initPetra();
-  }, []);
-
-  // Setup event listeners
-  useEffect(() => {
-    if (!window.aptos) {
-      console.log("Petra wallet not found during event setup");
-      return;
+  // Derive account address
+  const account = useMemo(() => {
+    if (connected && adapterAccount?.address) {
+      return adapterAccount.address.toString();
     }
+    return null;
+  }, [connected, adapterAccount]);
 
-    const handleAccountChange = (address: string | null) => {
-      console.log("Account changed:", address);
-      setAccount(address);
-      if (!address) {
-        setError("Please connect your Petra wallet");
-      } else {
-        setError(null);
-      }
-    };
+  // Derive network name
+  const networkName = useMemo(() => {
+    if (adapterNetwork?.name) {
+      return adapterNetwork.name.toString();
+    }
+    return null;
+  }, [adapterNetwork]);
 
-    const handleNetworkChange = (networkInfo: { name: string }) => {
-      console.log("Network changed:", networkInfo.name);
-      setNetwork(networkInfo.name);
-    };
-
-    window.aptos.onAccountChange(handleAccountChange);
-    window.aptos.onNetworkChange(handleNetworkChange);
-
-    // No need for cleanup as Petra wallet handles this internally
-  }, []);
+  // Log connection status changes
+  useEffect(() => {
+    if (connected && account) {
+      console.log("Wallet connected:", account);
+    }
+  }, [connected, account]);
 
   const connect = async () => {
-    if (!window.aptos) {
-      const error =
-        "Petra wallet not found. Please install Petra wallet from https://petra.app/";
-      console.error(error);
-      setError(error);
-      return;
-    }
-
     setIsConnecting(true);
     setError(null);
 
     try {
-      console.log("Requesting account access...");
-      // Request account access
-      const response = await window.aptos.connect();
+      // Find the Petra wallet from available wallets
+      const petraWallet = wallets.find(
+        (w) => w.name.toLowerCase().includes("petra")
+      );
 
-      console.log("Account:", response.address);
+      if (!petraWallet) {
+        setError(
+          "Petra wallet not found. Please install Petra wallet from https://petra.app/"
+        );
+        return;
+      }
 
-      // Get network info
-      const networkInfo = await window.aptos.network();
-
-      console.log("Network:", networkInfo.name);
-
-      // Use the address directly as provided by Petra wallet
-      // Aptos addresses have a different format than Ethereum addresses
-      // and should not be normalized with Ethereum validation rules
-      const aptosAddress = response.address;
-
-      console.log("Aptos address:", aptosAddress);
-
-      // Update state with the original address
-      setAccount(aptosAddress);
-      setNetwork(networkInfo.name);
+      console.log("Connecting via Wallet Standard...");
+      await adapterConnect(petraWallet.name);
+      console.log("Wallet connected successfully");
     } catch (err: any) {
       console.error("Failed to connect wallet:", err);
       setError(err.message || "Failed to connect wallet");
-      setAccount(null);
-      setNetwork(null);
     } finally {
       setIsConnecting(false);
     }
@@ -187,11 +114,7 @@ export const PetraProvider: React.FC<PetraProviderProps> = ({ children }) => {
   const disconnect = async () => {
     console.log("Disconnecting wallet...");
     try {
-      if (window.aptos) {
-        await window.aptos.disconnect();
-      }
-      setAccount(null);
-      setNetwork(null);
+      await adapterDisconnect();
       setError(null);
     } catch (err: any) {
       console.error("Error disconnecting wallet:", err);
@@ -203,7 +126,7 @@ export const PetraProvider: React.FC<PetraProviderProps> = ({ children }) => {
     <PetraContext.Provider
       value={{
         account,
-        network,
+        network: networkName,
         connect,
         disconnect,
         isConnecting,
@@ -213,5 +136,25 @@ export const PetraProvider: React.FC<PetraProviderProps> = ({ children }) => {
     >
       {children}
     </PetraContext.Provider>
+  );
+};
+
+/**
+ * Top-level provider that wraps the Aptos Wallet Adapter and exposes
+ * the legacy usePetra() hook interface for backward compatibility.
+ */
+export const PetraProvider: React.FC<PetraProviderProps> = ({ children }) => {
+  return (
+    <AptosWalletAdapterProvider
+      autoConnect={true}
+      dappConfig={{
+        network: Network.MAINNET,
+      }}
+      onError={(err) => {
+        console.error("Wallet adapter error:", err);
+      }}
+    >
+      <PetraBridge>{children}</PetraBridge>
+    </AptosWalletAdapterProvider>
   );
 };
